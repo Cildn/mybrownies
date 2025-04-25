@@ -1,0 +1,31 @@
+.search-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 200px; /* Adjust as needed */
+    border: 1px solid #eaeaea; /* Light grey border */
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px; /* Space between cards */
+    text-align: center;
+  }
+  
+  .search-card-image {
+    width: 100%;
+    height: auto;
+  }
+  
+  .search-card-content {
+    padding: 8px;
+  }
+  
+  .search-card-title {
+    margin: 0;
+    font-size: 16px; /* Adjust font size as needed */
+    font-weight: bold;
+    color: #333; /* Dark text color */
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }

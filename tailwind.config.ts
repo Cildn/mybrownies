@@ -1,0 +1,142 @@
+import type { Config } from "tailwindcss";
+import tailwindAnimate from "tailwindcss-animate";
+
+export default {
+  darkMode: ["class"],
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ["Hellix", "sans-serif"],
+        outfit: ["Outfit", "sans-serif"], // ✅ Define `font-outfit`
+      },
+      colors: {
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        chart: {
+          "1": "hsl(var(--chart-1))",
+          "2": "hsl(var(--chart-2))",
+          "3": "hsl(var(--chart-3))",
+          "4": "hsl(var(--chart-4))",
+          "5": "hsl(var(--chart-5))",
+        },
+        brand: {
+          25: "#f2f7ff",
+          50: "#ecf3ff",
+          100: "#dde9ff",
+          200: "#c2d6ff",
+          300: "#9cb9ff",
+          400: "#7592ff",
+          500: "#465fff",
+          600: "#3641f5",
+          700: "#2a31d8",
+          800: "#252dae",
+          900: "#262e89",
+          950: "#161950",
+        },
+        success: {
+          25: "#f6fef9",
+          50: "#ecfdf3",
+          100: "#d1fadf",
+          200: "#a6f4c5",
+          300: "#6ce9a6",
+          400: "#32d583",
+          500: "#12b76a",
+          600: "#039855",
+          700: "#027a48",
+          800: "#05603a",
+          900: "#054f31",
+          950: "#053321",
+        },
+        error: {
+          25: "#fffbfa",
+          50: "#fef3f2",
+          100: "#fee4e2",
+          200: "#fecdca",
+          300: "#fda29b",
+          400: "#f97066",
+          500: "#f04438",
+          600: "#d92d20",
+          700: "#b42318",
+          800: "#912018",
+          900: "#7a271a",
+          950: "#55160c",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      fontSize: {
+        "text-theme-xs": ["12px", "18px"],
+        "text-theme-sm": ["14px", "20px"],
+        "text-theme-xl": ["20px", "30px"],
+        "text-title-sm": ["30px", "38px"],
+        "text-title-md": ["36px", "44px"],
+        "text-title-lg": ["48px", "60px"],
+        "text-title-xl": ["60px", "72px"],
+        "text-title-2xl": ["72px", "90px"],
+        "theme-xs": ["12px", "18px"],
+        "theme-sm": ["14px", "20px"],
+        "theme-xl": ["20px", "30px"],
+      },
+      boxShadow: {
+        "theme-sm": "0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)",
+        "theme-md": "0px 4px 8px -2px rgba(16, 24, 40, 0.1), 0px 2px 4px -2px rgba(16, 24, 40, 0.06)",
+        "theme-lg": "0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03)",
+        "theme-xl": "0px 20px 24px -4px rgba(16, 24, 40, 0.08), 0px 8px 8px -4px rgba(16, 24, 40, 0.03)",
+        "datepicker": "-5px 0 0 #262d3c, 5px 0 0 #262d3c",
+        "focus-ring": "0px 0px 0px 4px rgba(70, 95, 255, 0.12)",
+      },
+      dropShadow: {
+        "4xl": "0 35px 35px rgba(0, 0, 0, 0.25), 0 45px 65px rgba(0, 0, 0, 0.15)",
+      },
+      zIndex: {
+        1: "1",
+        9: "9",
+        99: "99",
+        999: "999",
+        9999: "9999",
+        99999: "99999",
+        999999: "999999",
+      },
+    },
+  },
+  plugins: [tailwindAnimate],
+} satisfies Config;
