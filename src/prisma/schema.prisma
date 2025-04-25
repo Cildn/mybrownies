@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ProductType {
+  id              String    @id @default(uuid())
+  name            String
+  percentageRate  Float
+  products        Product[]
+}
+
+model Product {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., PROD-SCENTS-001)
+  name            String
+  description     String
+  additionalInfo  String?
+  typeId          String?
+  type            ProductType? @relation(fields: [typeId], references: [id])
+  discountRate    Int          @default(0)
+  brand           String?
+  stock           Int
+  category        Category     @relation(fields: [categoryId], references: [id])
+  categoryId      String
+  collections     Collection[] @relation("ProductCollections")
+  images          String[]
+  videos          String[]
+  materials       String[]
+  sizes           String[]     // List of sizes (e.g., ["S", "M", "L"])
+  prices          Float[]      // List of prices corresponding to sizes (e.g., [19.99, 24.99, 29.99])
+  colors          String[]
+  isFeatured      Boolean      @default(false)
+  orderItems      OrderItem[]  @relation("ProductOrderItems")
+  cartItems       CartItem[]   @relation("ProductCartItems")
+  updatedAt       DateTime     @default(now())
+  searchText      String       @default("")
+}
+
+model Collection {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., COLL-SCENTS-001)
+  name            String
+  description     String?
+  additionalInfo  String?
+  discountRate    Int?
+  images          String[]
+  videos          String[]
+  price           Float
+  category        Category?    @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  status          String       @default("complete")
+  products        Product[]    @relation("ProductCollections")
+  productVariants String[]     
+  orderItems      OrderItem[]  @relation("CollectionOrderItems")
+  cartItems       CartItem[]   @relation("CollectionCartItems")
+  updatedAt       DateTime     @updatedAt @default(now())
+  searchText      String       @default("")
+}
+
+
+model Category {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., CAT-001)
+  name            String
+  productCounter  Int          @default(0) // Counter for products
+  collectionCounter Int        @default(0) // Counter for collections
+  image           String
+  video           String?
+  products        Product[]
+  collections     Collection[]
+}
+
+model CartItem {
+  id              String       @id @default(uuid())
+  sessionId       String
+  productId       String?
+  product         Product?     @relation("ProductCartItems", fields: [productId], references: [id])
+  collectionId    String?
+  collection      Collection?  @relation("CollectionCartItems", fields: [collectionId], references: [id])
+  quantity        Int
+  selectedColorIndex Int
+  selectedSizeIndex Int
+}
+
+model Order {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., ORD-001)
+  total           Float
+  status          String       @default("Pending") // Can be Pending, Completed, Refunded
+  createdAt       DateTime     @default(now())
+  completedAt     DateTime?
+  updatedAt       DateTime?
+  orderItems      OrderItem[]
+}
+
+model OrderItem {
+  id              String       @id @default(uuid())
+  order           Order        @relation(fields: [orderId], references: [id])
+  orderId         String
+  product         Product?     @relation("ProductOrderItems", fields: [productId], references: [id])
+  productId       String?
+  collection      Collection?  @relation("CollectionOrderItems", fields: [collectionId], references: [id])
+  collectionId    String?
+  quantity        Int
+  price           Float
+  productVariants String
+}
+
+model Admin {
+  id              String       @id @default(uuid())
+  email           String       @unique
+  password        String
+  role            String       @default("ADMIN") // Future role management
+  otp             String?      // OTP field
+  otpExpiry       DateTime?
+  otpRequestCount Int          @default(0)
+}
+
+model SiteConfig {
+  id              String       @id @default("site-settings")
+  maintenanceMode Boolean      @default(false)
+  liveMode        Boolean      @default(true) // Add this line
+  heroVideo       String?
+  monthlyTarget   Float
+  categoryCounter Int
+  orderCounter    Int 
+}
+
+model Media {
+  id              String       @id @default(uuid())
+  name            String
+  url             String
+  type            String       // MIME type (e.g., "image/jpeg", "video/mp4")
+  size            Int          // File size in bytes
+  folder          String
+  uploadedAt      DateTime     @default(now())
+  mimeType        String       // Explicitly store the MIME type for clarity
+  dimensions      String?      // Optional: For images (e.g., "1920x1080")
+  duration        Int?         // Optional: For videos (in seconds)
+  tags            String[]     // Optional: Tags for categorization or filtering
+}
