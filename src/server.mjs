@@ -27,7 +27,7 @@ const __dirname = path.dirname(__filename);
 
 // 🔹 1. APPLY CORS MIDDLEWARE
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: process.env.FRONTEND_URL,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -53,7 +53,7 @@ app.use(cookieParser());
 const publicUploadsPath = path.join(__dirname, '../public/uploads');
 app.use('/uploads', express.static(publicUploadsPath, {
   setHeaders: (res) => {
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
   }
 }));
 
@@ -141,9 +141,9 @@ async function startServer() {
   await server.start();
   server.applyMiddleware({ app, path: "/graphql" });
 
-  const PORT = process.env.PORT || 4000;
+  const PORT = process.env.PORT;
   app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/graphql`);
+    console.log(`Server running at https://mybrownies.com.ng/graphql`);
   });
 
   server.timeout = 300000; // Set timeout to 5 minutes (300000 ms)

@@ -33,7 +33,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }  catch (error) {
     console.error("Error during file upload:", error);
     res.status(500)
-       .header("Access-Control-Allow-Origin", "http://localhost:3000")
+       .header("Access-Control-Allow-Origin", "https://mybrownies.com.ng")
        .header("Access-Control-Allow-Credentials", "true")
        .json({ error: "Upload failed", details: error.message });
   }
