@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setToken(rememberMe);
 
       // only redirect if we're on the login (or root) page
-      if (pathname === "/signin" || pathname === "/") {
+      if (pathname === "/signin") {
         router.replace("/admins/dashboard");
       }
     }

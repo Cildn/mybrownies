@@ -35,8 +35,15 @@ export default function Navbar({ isVisible }: { isVisible: boolean }) {
         <button onClick={() => setSidebar("menu")}>
           <Menu size={24} />
         </button>
-        <Link href="/" className="flex items-center gap-2 text-4xl text-amber-900">
-        <Image src="/images/brownies.png" alt="Brownies" width={60} height={60} /> Brownie's
+        <Link href="/" className="flex items-center gap-2 text-amber-900">
+          <Image
+            src="/images/brownies.png"
+            alt="Brownies"
+            width={60}
+            height={60}
+            className="w-[clamp(30px,15vw,60px)] h-auto"
+          />
+          <span className="text-[clamp(1.5rem,3vw,2rem)]">Brownie&apos;s</span>
         </Link>
         <div className="flex gap-4">
           <button onClick={() => setSidebar("search")}>

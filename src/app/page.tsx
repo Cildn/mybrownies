@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import AnimationWrapper from "@/components/AnimationWrapper";
-import Hero from "@/components/landing/Hero";
 import CategoryGrid from "@/components/landing/CategoryGrid";
 import PerfectGiftBanner from "@/components/landing/PerfectGiftBanner";
 import { SidebarProvider } from "@/components/context/SidebarContext";
@@ -20,9 +19,7 @@ export default function Home() {
   return (
     <main className="bg-white text-black">
       <SidebarProvider>
-      <AnimationWrapper>
-      <Hero />
-      </AnimationWrapper>
+      <AnimationWrapper/>
       <CategoryGrid />
       <PerfectGiftBanner />
       <Footer />

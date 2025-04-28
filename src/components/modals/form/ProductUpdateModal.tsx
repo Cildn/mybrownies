@@ -190,7 +190,7 @@ export default function ProductUpdateModal({
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
           {/* Product Name */}
           <div className="col-span-1 sm:col-span-2">
-            <Label>Product Name</Label>
+            <Label>Product Name ({state.productName})</Label>
             <Input
               type="text"
               placeholder="Enter product name"
@@ -221,7 +221,7 @@ export default function ProductUpdateModal({
 
           {/* Discount Rate */}
           <div className="col-span-1">
-            <Label>Discount Rate (%)</Label>
+            <Label>Discount Rate ({state.discountRate}%)</Label>
             <Input
               type="number"
               placeholder="Enter discount rate (e.g., 10 for 10%)"
@@ -262,7 +262,7 @@ export default function ProductUpdateModal({
 
           {/* Brand */}
           <div className="col-span-1">
-            <Label>Brand</Label>
+            <Label>Brand ({state.brand})</Label>
             <Input
               type="text"
               placeholder="Enter brand"

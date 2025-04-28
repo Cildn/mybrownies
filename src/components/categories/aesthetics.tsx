@@ -1,7 +1,6 @@
-"use client";
-import { useState, useEffect } from "react";
+"use client"
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import '../../app/globals.css';
 import ProductCard from "@/components/product/ProductCard";
 import CollectionCard from "../product/CollectionCard";
 import Tabs from "./Tabs";
@@ -11,121 +10,131 @@ import { GET_PRODUCTS } from "@/lib/graphql/queries/products";
 import { GET_COLLECTIONS } from "@/lib/graphql/queries/collections";
 import { GET_CATEGORY_BY_NAME } from "@/lib/graphql/queries/categories";
 
+interface ProductType {
+  id: string;
+  name: string;
+  category: { name: string };
+  colors: string[];
+  sizes: string[];
+  prices: number[];
+  isFeatured: boolean;
+}
+
+interface CollectionType {
+  id: string;
+  name: string;
+  category: { name: string };
+}
+
+interface FiltersType {
+  colors: string[];
+  sizes: string[];
+  priceRange: string | null;
+  sortBy?: string;
+}
+
 export default function AestheticsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sidebarType, setSidebarType] = useState(null);
-  const [activeTab, setActiveTab] = useState("products");
-  const [filters, setFilters] = useState({
+  const [sidebarType, setSidebarType] = useState<"filter" | null>(null);
+  const [activeTab, setActiveTab] = useState<"products" | "collections">("products");
+  const [filters, setFilters] = useState<FiltersType>({
     colors: [],
     sizes: [],
     priceRange: null,
-    collections: [],
+    sortBy: undefined,
   });
+  const [videoMuted, setVideoMuted] = useState(true);
 
-  // Fetch data
-  const { data: categoryData } = useQuery(GET_CATEGORY_BY_NAME, {
+  // GraphQL queries
+  const { data: catData } = useQuery(GET_CATEGORY_BY_NAME, {
     variables: { name: "Aesthetics" },
   });
+  const { loading: lp, error: ep, data: pd } = useQuery(GET_PRODUCTS);
+  const { loading: lc, error: ec, data: cd } = useQuery(GET_COLLECTIONS);
 
-  const { loading: productsLoading, error: productsError, data: productsData } = useQuery(GET_PRODUCTS);
-  const { loading: collectionsLoading, error: collectionsError, data: collectionsData } = useQuery(GET_COLLECTIONS);
+  const categoryVideo = catData?.category?.video || "/placeholder-video.mp4";
+  const allProducts = pd?.products || [];
+  const allCollections = cd?.collections || [];
 
-  const categoryVideo = categoryData?.category?.video || "/placeholder-video.mp4";
+  // Filter & sort products
+  const filteredProducts = useMemo(() => {
+    return allProducts
+      .filter((p: ProductType) => {
+        if (p.category?.name !== "Aesthetics") return false; // Ensure category matches
+        if (!p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        if (filters.colors.length && !filters.colors.includes(p.colors[0])) return false;
+        if (filters.sizes.length && !p.sizes.some((s) => filters.sizes.includes(s))) return false;
+        if (filters.priceRange) {
+          const price = p.prices[0];
+          switch (filters.priceRange) {
+            case "0-10000":
+              if (price > 10000) return false;
+              break;
+            case "10000-50000":
+              if (price <= 10000 || price > 50000) return false;
+              break;
+            case "50000-100000":
+              if (price <= 50000 || price > 100000) return false;
+              break;
+            case "100000+":
+              if (price <= 100000) return false;
+              break;
+          }
+        }
+        return true;
+      })
+      .sort((a: ProductType, b: ProductType) => {
+        if (a.isFeatured && !b.isFeatured) return -1;
+        if (!a.isFeatured && b.isFeatured) return 1;
+        return a.name.localeCompare(b.name);
+      });
+  }, [allProducts, searchQuery, filters]);
 
-  // Filter and sort products - featured first, then alphabetically
-  const allProducts = productsData?.products || [];
-  const allCollections = collectionsData?.collections || [];
-
-  const filteredProducts = allProducts
-    .filter((product) => {
-      const matchesCategory = product.category?.name?.toLowerCase() === "aesthetics";
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Apply filters
-      const matchesColor = filters.colors.length === 0 || filters.colors.includes(product.colors[0]);
-      const matchesSize = filters.sizes.length === 0 || filters.sizes.some((size) => product.sizes.includes(size));
-      const matchesPrice =
-        !filters.priceRange ||
-        (filters.priceRange === "0-10000" && product.prices[0] <= 10000) ||
-        (filters.priceRange === "10000-50000" && product.prices[0] > 10000 && product.prices[0] <= 50000) ||
-        (filters.priceRange === "50000-100000" && product.prices[0] > 50000 && product.prices[0] <= 100000) ||
-        (filters.priceRange === "100000+" && product.prices[0] > 100000);
-
-      return matchesCategory && matchesSearch && matchesColor && matchesSize && matchesPrice;
-    })
-    .sort((a, b) => {
-      // Featured products first
-      if (a.isFeatured && !b.isFeatured) return -1;
-      if (!a.isFeatured && b.isFeatured) return 1;
-
-      // Then sort alphabetically by name
-      return a.name.localeCompare(b.name);
+  // Filter collections (unaffected by product filters)
+  const filteredCollections = useMemo(() => {
+    return allCollections.filter((c: CollectionType) => {
+      if (c.category?.name !== "Aesthetics") return false; // Ensure category matches
+      if (!c.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
     });
+  }, [allCollections, searchQuery]);
 
-  // Filter collections
-  const filteredCollections = allCollections.filter((collection) => {
-    const matchesCategory = collection.category?.name?.toLowerCase() === "aesthetics";
-    const matchesSearch = collection.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCollection = filters.collections.length === 0 || filters.collections.includes(collection.name);
-
-    return matchesCategory && matchesSearch && matchesCollection;
-  });
-
-  const handleFiltersOpen = () => {
-    setSidebarType("filter");
+  const handleFilterChange = (type: keyof FiltersType, value: string) => {
+    setFilters((prev) => {
+      if (type === "priceRange") {
+        return { ...prev, priceRange: prev.priceRange === value ? null : value };
+      }
+      if (type === "sortBy") {
+        return { ...prev, sortBy: prev.sortBy === value ? undefined : value };
+      }
+      const arr = prev[type];
+      return {
+        ...prev,
+        [type]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
+      };
+    });
   };
 
-  const handleSidebarClose = () => {
-    setSidebarType(null);
-  };
-
-  const handleFilterChange = (type, value) => {
-    if (type === "colors") {
-      setFilters((prev) => ({
-        ...prev,
-        colors: prev.colors.includes(value)
-          ? prev.colors.filter((color) => color !== value)
-          : [...prev.colors, value],
-      }));
-    } else if (type === "sizes") {
-      setFilters((prev) => ({
-        ...prev,
-        sizes: prev.sizes.includes(value)
-          ? prev.sizes.filter((size) => size !== value)
-          : [...prev.sizes, value],
-      }));
-    } else if (type === "priceRange") {
-      setFilters((prev) => ({ ...prev, priceRange: prev.priceRange === value ? null : value }));
-    } else if (type === "collections") {
-      setFilters((prev) => ({
-        ...prev,
-        collections: prev.collections.includes(value)
-          ? prev.collections.filter((col) => col !== value)
-          : [...prev.collections, value],
-      }));
-    }
-  };
-
-  if (productsLoading || collectionsLoading) return <div className="text-center text-lg">Loading...</div>;
-  if (productsError || collectionsError) return <div className="text-center text-red-500">Error loading data.</div>;
+  if (lp || lc) return <div className="text-center text-lg py-20">Loading...</div>;
+  if (ep || ec) return <div className="text-center text-red-500 py-20">Error loading data.</div>;
 
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Hero Section */}
       <section
         className="relative w-full h-[500px] flex items-center justify-center bg-gray-200 mt-14 overflow-hidden"
+        onMouseEnter={() => setVideoMuted(false)}
+        onMouseLeave={() => setVideoMuted(true)}
       >
         <video
           autoPlay
           loop
-          muted
+          muted={videoMuted}
           playsInline
-          className="absolute inset-0 z-0 w-full h-full object-cover transition-opacity duration-300"
+          className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src={`${categoryVideo}`} type="video/mp4" />
-          Your browser does not support the video tag.
+          <source src={categoryVideo} type="video/mp4" />
         </video>
-
         <motion.div
           className="relative z-10 text-center text-white"
           initial={{ opacity: 0, y: 30 }}
@@ -137,25 +146,27 @@ export default function AestheticsPage() {
         </motion.div>
       </section>
 
-      {/* Products Info and Filters */}
+      {/* Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Tabs
           onTabChange={setActiveTab}
-          onFiltersOpen={handleFiltersOpen}
+          onFiltersOpen={() => setSidebarType("filter")}
           productCount={filteredProducts.length}
           collectionCount={filteredCollections.length}
         />
 
         <Sidebar
           type={sidebarType}
-          onClose={handleSidebarClose}
-          products={filteredProducts}
-          collections={filteredCollections}
+          onClose={() => setSidebarType(null)}
+          products={allProducts} // Pass all products for filter options
           filters={filters}
           onFilterChange={handleFilterChange}
+          onDone={() => setSidebarType(null)}
+          onClearAll={() =>
+            setFilters({ colors: [], sizes: [], priceRange: null, sortBy: undefined })
+          }
         />
 
-        {/* Add featured indicator to the grid */}
         <motion.section
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           initial={{ opacity: 0 }}
@@ -164,40 +175,18 @@ export default function AestheticsPage() {
         >
           <AnimatePresence>
             {activeTab === "products" ? (
-              filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
-                  <div key={product.id} className="relative">
-                    {product.isFeatured && (
-                      <div className="absolute top-2 left-2 bg-black text-white px-2 py-1 text-xs z-10">
-                        Featured
-                      </div>
-                    )}
-                    <ProductCard product={product} />
-                  </div>
-                ))
-              ) : (
-                <motion.p
-                  className="col-span-full text-center text-gray-500 text-lg"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  No results found.
-                </motion.p>
-              )
+              filteredProducts.map((p) => (
+                <div key={p.id} className="relative">
+                  {p.isFeatured && (
+                    <div className="absolute top-2 left-2 bg-black text-white px-2 py-1 text-xs z-10">
+                      Featured
+                    </div>
+                  )}
+                  <ProductCard product={p} />
+                </div>
+              ))
             ) : (
-              filteredCollections.length > 0 ? (
-                filteredCollections.map((collection) => (
-                  <CollectionCard key={collection.id} collection={collection} />
-                ))
-              ) : (
-                <motion.p
-                  className="col-span-full text-center text-gray-500 text-lg"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  No collections found.
-                </motion.p>
-              )
+              filteredCollections.map((c) => <CollectionCard key={c.id} collection={c} />)
             )}
           </AnimatePresence>
         </motion.section>

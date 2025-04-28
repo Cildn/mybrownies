@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, useAnimationControls } from "framer-motion";
 
 export default function OverlayText({ onAnimationComplete }: { onAnimationComplete: () => void }) {
   const [text, setText] = useState("");
   const controls = useAnimationControls();
   const targetText = "Brownie's";
+  const animationCompleteRef = useRef(onAnimationComplete);
+
+  // Update ref when prop changes
+  useEffect(() => {
+    animationCompleteRef.current = onAnimationComplete;
+  }, [onAnimationComplete]);
 
   // Typing animation
   useEffect(() => {
@@ -17,24 +23,39 @@ export default function OverlayText({ onAnimationComplete }: { onAnimationComple
       if (index === targetText.length) {
         clearInterval(interval);
         setTimeout(() => {
-          controls.start("floatUp"); // Start floating effect
-        }, 500);
+          controls.start("floatUp");
+        }, 300);
       }
-    }, 125);
+    }, 150);
     return () => clearInterval(interval);
   }, [controls]);
 
+  // Handle animation completion using the built-in onAnimationComplete event
   return (
     <motion.div
-      className="fixed top-0 left-0 w-full h-screen flex justify-center items-center bg-white z-50"
+      className="fixed inset-0 bg-white flex justify-center items-center z-50 overflow-hidden"
       initial={{ opacity: 1 }}
       animate={controls}
       variants={{
-        floatUp: { y: -240, transition: { duration: 0.8 } }, // Floating Up Animation
+        floatUp: {
+          y: -235,
+          opacity: 0,
+          transition: { duration: .7, ease: "easeInOut" },
+        },
       }}
-      onAnimationComplete={onAnimationComplete} // Call parent function when done
+      onAnimationComplete={() => {
+        animationCompleteRef.current?.();
+      }}
     >
-      <motion.h1 className="text-8xl font-bold text-black">{text}</motion.h1>
+      <motion.h1
+        className="text-center text-black font-bold tracking-wide"
+        style={{ 
+          fontSize: "clamp(3rem, 8vw, 5rem)",
+          lineHeight: "clamp(1.2, 3vw, 1.5)",
+        }}
+      >
+        {text}
+      </motion.h1>
     </motion.div>
   );
 }

@@ -4,14 +4,14 @@ import Link from "next/link";
 
 const CompanyHistory = () => {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 py-12 px-4 sm:px-6 lg:px-8 mt-16">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 py-12 px-4 sm:px-6 lg:px-8 mt-12">
       {/* Header Section */}
       <header className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-900 to-orange-800 dark:from-amber-700 dark:to-orange-500">
+        <h1 className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-950 to-orange-800 dark:from-amber-700 dark:to-orange-500">
           Our Story
         </h1>
-        <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-          From humble beginnings to sweet success—this is the journey of Lés Brownie's.
+        <p className="mt-5 text-lg text-gray-600 dark:text-gray-400">
+          From humble beginnings to sweet success—this is the journey of Lés Brownie&apos;s.
         </p>
       </header>
 
@@ -23,7 +23,7 @@ const CompanyHistory = () => {
             It All Started With Cocktails...
           </h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            At Lés Brownie's, our journey didn’t start with brownies. We began by selling cocktails
+            At Lés Brownie&apos;s, our journey didn’t start with brownies. We began by selling cocktails
             and mocktails at dinner events, all while juggling a couple of side hustles. We didn’t
             have it all figured out, but we had drive—and we knew we wanted to build something
             meaningful.
@@ -37,7 +37,7 @@ const CompanyHistory = () => {
           </h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
             Throughout 2024, we pitched in money, saved, and planned until we officially launched
-            Brownie's. We started by delivering baked goods to nearby cafeterias. That first
+            Brownie&apos;s. We started by delivering baked goods to nearby cafeterias. That first
             step—seeing our products on those shelves—was a small but powerful win. It gave us the
             fuel we needed to keep going.
           </p>
@@ -76,8 +76,8 @@ const CompanyHistory = () => {
             More Than Just Business
           </h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            For us, this isn't just business—it’s heart. We know what it means to hustle, to manage
-            tight budgets, and to crave something that brings a little joy to the day. That's why,
+            For us, this isn&apos;t just business—it’s heart. We know what it means to hustle, to manage
+            tight budgets, and to crave something that brings a little joy to the day. That&apos;s why,
             no matter what, we maintain a balance between excellent quality, generous portions, and
             friendly prices.
           </p>

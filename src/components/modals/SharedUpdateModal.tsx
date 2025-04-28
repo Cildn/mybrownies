@@ -35,7 +35,13 @@ export default function SharedUpdateModal<T>({
 
   const handleChange = (key: keyof T, value: any) => {
     if (!state) return;
-    setState({ ...state, [key]: value });
+  
+    // Convert to number if the field is of type 'number'
+    const processedValue = fields[key as string]?.type === "number" 
+      ? parseFloat(value) 
+      : value;
+  
+    setState({ ...state, [key]: processedValue });
   };
 
   const handleSubmit = async () => {

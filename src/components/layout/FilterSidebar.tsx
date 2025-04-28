@@ -1,137 +1,166 @@
-// components/FilterSidebar.js
-import React, { useState } from 'react';
+"use client";
+import React, { useState, useMemo } from "react";
 
-const FilterSidebar = () => {
-  const [activeSection, setActiveSection] = useState(null);
+interface ProductType {
+  id: string;
+  name: string;
+  category: { name: string };
+  colors: string[];
+  sizes: string[];
+  prices: number[];
+}
 
-  const toggleSection = (section) => {
-    setActiveSection(activeSection === section ? null : section);
-  };
+interface FiltersType {
+  colors: string[];
+  sizes: string[];
+  priceRange: string | null;
+  sortBy?: string;
+}
+
+interface FilterSidebarProps {
+  products: ProductType[];
+  filters: FiltersType;
+  onFilterChange: (type: keyof FiltersType, value: string) => void;
+  onDone: () => void;
+  onClearAll: () => void;
+}
+
+export default function FilterSidebar({
+  products,
+  filters,
+  onFilterChange,
+  onDone,
+  onClearAll,
+}: FilterSidebarProps) {
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const toggle = (s: string) => setActiveSection((x) => (x === s ? null : s));
+
+  const availableColors = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => p.colors.forEach((c) => c && set.add(c)));
+    return Array.from(set);
+  }, [products]);
+
+  const availableSizes = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => p.sizes.forEach((z) => z && set.add(z)));
+    return Array.from(set);
+  }, [products]);
+
+  const Checkbox = ({ section, value, label }: { 
+    section: keyof FiltersType; 
+    value: string; 
+    label: string 
+  }) => (
+    <div className="flex items-center mb-2">
+      <input
+        type="checkbox"
+        className="mr-2"
+        checked={
+          section === "priceRange" 
+            ? filters.priceRange === value 
+            : Array.isArray(filters[section]) 
+                ? filters[section].includes(value) 
+                : false
+        }
+        onChange={() => onFilterChange(section, value)}
+      />
+      <label>{label}</label>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-8">
-        <button
-          onClick={() => toggleSection('color')}
-          className="w-full flex justify-between items-center py-2"
-        >
+      {/* COLORS */}
+      <div className="mb-6">
+        <button onClick={() => toggle("colors")} className="w-full flex justify-between py-2 font-semibold">
           <span>COLOR</span>
-          <span>{activeSection === 'color' ? '-' : '+'}</span>
+          <span>{activeSection === "colors" ? "−" : "+"}</span>
         </button>
-        {activeSection === 'color' && (
-          <div className="mt-4">
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="black" className="mr-2" />
-              <label htmlFor="black">Black (14)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="beige" className="mr-2" />
-              <label htmlFor="beige">Beige (10)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="silvery" className="mr-2" />
-              <label htmlFor="silvery">Silvery (6)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="white" className="mr-2" />
-              <label htmlFor="white">White (6)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="blue" className="mr-2" />
-              <label htmlFor="blue">Blue (5)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="brown" className="mr-2" />
-              <label htmlFor="brown">Brown (3)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="grey" className="mr-2" />
-              <label htmlFor="grey">Grey (3)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="red" className="mr-2" />
-              <label htmlFor="red">Red (3)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="green" className="mr-2" />
-              <label htmlFor="green">Green (1)</label>
-            </div>
-            <div className="flex items-center mb-2">
-              <input type="checkbox" id="pink" className="mr-2" />
-              <label htmlFor="pink">Pink (1)</label>
-            </div>
-            <div className="flex items-center">
-              <input type="checkbox" id="purple" className="mr-2" />
-              <label htmlFor="purple">Purple (1)</label>
-            </div>
+        {activeSection === "colors" && (
+          <div className="mt-3 pl-2">
+            {availableColors.map((c) => (
+              <Checkbox
+                key={`colors-${c}`}
+                section="colors"
+                value={c}
+                label={c}
+              />
+            ))}
           </div>
         )}
       </div>
 
-      <div className="mb-8">
-        <button
-          onClick={() => toggleSection('category')}
-          className="w-full flex justify-between items-center py-2"
-        >
-          <span>CATEGORY</span>
-          <span>{activeSection === 'category' ? '-' : '+'}</span>
+      {/* SIZES */}
+      <div className="mb-6">
+        <button onClick={() => toggle("sizes")} className="w-full flex justify-between py-2 font-semibold">
+          <span>SIZES</span>
+          <span>{activeSection === "sizes" ? "−" : "+"}</span>
         </button>
-        {activeSection === 'category' && (
-          <div className="mt-4">
-            {/* Add category filters here */}
+        {activeSection === "sizes" && (
+          <div className="mt-3 pl-2">
+            {availableSizes.map((z) => (
+              <Checkbox
+                key={`sizes-${z}`}
+                section="sizes"
+                value={z}
+                label={z}
+              />
+            ))}
           </div>
         )}
       </div>
 
-      <div className="mb-8">
-        <button
-          onClick={() => toggleSection('bagSize')}
-          className="w-full flex justify-between items-center py-2"
-        >
-          <span>BAG SIZE</span>
-          <span>{activeSection === 'bagSize' ? '-' : '+'}</span>
+      {/* PRICE RANGE */}
+      <div className="mb-6">
+        <button onClick={() => toggle("priceRange")} className="w-full flex justify-between py-2 font-semibold">
+          <span>PRICE RANGE</span>
+          <span>{activeSection === "priceRange" ? "−" : "+"}</span>
         </button>
-        {activeSection === 'bagSize' && (
-          <div className="mt-4">
-            {/* Add bag size filters here */}
+        {activeSection === "priceRange" && (
+          <div className="mt-3 pl-2">
+            {["0-10000", "10000-50000", "50000-100000", "100000+"].map((r) => (
+              <Checkbox
+                key={`priceRange-${r}`}
+                section="priceRange"
+                value={r}
+                label={r}
+              />
+            ))}
           </div>
         )}
       </div>
 
-      <div className="mb-8">
-        <button
-          onClick={() => toggleSection('style')}
-          className="w-full flex justify-between items-center py-2"
-        >
-          <span>STYLE</span>
-          <span>{activeSection === 'style' ? '-' : '+'}</span>
-        </button>
-        {activeSection === 'style' && (
-          <div className="mt-4">
-            {/* Add style filters here */}
-          </div>
-        )}
-      </div>
-
-      <div className="mb-8">
-        <button
-          onClick={() => toggleSection('sortBy')}
-          className="w-full flex justify-between items-center py-2"
-        >
+      {/* SORT BY */}
+      <div className="mb-6">
+        <button onClick={() => toggle("sortBy")} className="w-full flex justify-between py-2 font-semibold">
           <span>SORT BY</span>
-          <span>{activeSection === 'sortBy' ? '-' : '+'}</span>
+          <span>{activeSection === "sortBy" ? "−" : "+"}</span>
         </button>
-        {activeSection === 'sortBy' && (
-          <div className="mt-4">
-            {/* Add sort by options here */}
+        {activeSection === "sortBy" && (
+          <div className="mt-3 pl-2">
+            {["Name A-Z", "Name Z-A", "Price Low-High", "Price High-Low"].map((o) => (
+              <div key={`sortBy-${o}`} className="flex items-center mb-2">
+                <input
+                  type="radio"
+                  name="sortBy"
+                  className="mr-2"
+                  checked={filters.sortBy === o}
+                  onChange={() => onFilterChange("sortBy", o)}
+                />
+                <label>{o}</label>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      <button className="w-full border p-3 mt-8">DONE</button>
-      <button className="w-full text-center text-gray-500 mt-4">CLEAR ALL</button>
+      <button onClick={onDone} className="w-full bg-amber-900 text-white py-3 rounded mb-2">
+        DONE
+      </button>
+      <button onClick={onClearAll} className="w-full text-center text-gray-500 underline">
+        CLEAR ALL
+      </button>
     </div>
   );
-};
-
-export default FilterSidebar;
+}
