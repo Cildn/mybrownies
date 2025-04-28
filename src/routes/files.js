@@ -171,6 +171,9 @@ router.get("/files/stats", async (req, res) => {
 
 router.delete("/files/delete", async (req, res) => {
   try {
+    let sanitizedFolder = "";
+    let sanitizedFileName = "";
+
     const { folder = "", fileName } = req.body;
 
     if (!fileName) {
@@ -178,12 +181,12 @@ router.delete("/files/delete", async (req, res) => {
     }
 
     // Sanitize inputs
-    const sanitizedFolder = folder
+    sanitizedFolder = folder
       .replace(/\.\./g, "")
       .replace(/\/+/g, "/")
       .replace(/[^a-zA-Z0-9_\-/]/g, "");
     
-    const sanitizedFileName = fileName
+    sanitizedFileName = fileName
       .replace(/\.\./g, "")
       .replace(/\//g, "")
       .replace(/[^a-zA-Z0-9_.-]/g, "");
@@ -204,7 +207,7 @@ router.delete("/files/delete", async (req, res) => {
       console.error("File access error:", err);
       return res.status(404).json({ 
         error: "File not found",
-        details: `Path: ${path.join(sanitizedFolder, sanitizedFileName)}`
+        details: `Path: ${path.join(sanitizedFolder, sanitizedFileName)}` 
       });
     }
 

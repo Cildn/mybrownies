@@ -127,6 +127,7 @@ model SiteConfig {
   liveMode        Boolean      @default(true) // Add this line
   heroVideo       String?
   monthlyTarget   Float
+  serviceFee      Float
   categoryCounter Int
   orderCounter    Int 
 }

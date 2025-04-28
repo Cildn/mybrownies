@@ -7,6 +7,7 @@ export const adminSchema = gql`
     liveMode: Boolean!
     heroVideo: String!
     monthlyTarget: Float!
+    serviceFee: Float!
   }
 
   type MonthlyTargetResponse {
@@ -45,6 +46,7 @@ export const adminSchema = gql`
       liveMode: Boolean!
       heroVideo: String
       monthlyTarget: Float
+      serviceFee: Float
     ): SiteConfig!
     verifyAdmin(email: String!, otp: String!, rememberMe: Boolean!): AuthPayload!
   }

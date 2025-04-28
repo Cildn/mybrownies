@@ -121,7 +121,7 @@ export const adminResolvers = {
       };
     },
 
-    updateSiteConfig: async (_, { maintenanceMode, liveMode, heroVideo, monthlyTarget }, { admin }) => {
+    updateSiteConfig: async (_, { maintenanceMode, liveMode, heroVideo, monthlyTarget, serviceFee }, { admin }) => {
       if (!admin || admin.role !== "admin") throw new Error("Unauthorized");
     
       if (typeof maintenanceMode !== "boolean") throw new Error("Invalid value for maintenanceMode");
@@ -135,6 +135,7 @@ export const adminResolvers = {
           liveMode,
           heroVideo,
           monthlyTarget,
+          serviceFee,
         },
         create: {
           id: "site-settings",
@@ -142,6 +143,7 @@ export const adminResolvers = {
           liveMode,
           heroVideo,
           monthlyTarget,
+          serviceFee: 0,
           categoryCounter: 0, // Initialize category counter on create
           orderCounter: 0,
         },
