@@ -36,7 +36,7 @@ const Files: React.FC<FilesProps> = ({ files, onDelete }) => {
     if (!confirm(`Are you sure you want to delete "${fileName}"?`)) return;
 
     try {
-      const response = await fetch('http://localhost:4000/api/files/delete', {
+      const response = await fetch('https://mybrownies.com.ng/api/files/delete', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

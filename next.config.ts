@@ -14,12 +14,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:4000/api/:path*", // Proxy API requests
+        destination: "https://mybrownies.com.ng/api/:path*", // Proxy API requests
       },
 
       {
         source: "/uploads/:path*",
-        destination: "http://localhost:4000/uploads/:path*",
+        destination: "https://mybrownies.com.ng/uploads/:path*",
       },
     ];
   },
