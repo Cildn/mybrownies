@@ -2,9 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true, // Enables Next.js app directory
-  },
 
   images: {
     domains: ['localhost', '5.135.21.229'],
