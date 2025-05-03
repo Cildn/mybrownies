@@ -4,13 +4,11 @@ import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { useMutation, TypedDocumentNode } from "@apollo/client";
-import { Category, ProductType } from "@/types";
 
 interface FieldConfig {
   label: string;
   type: "text" | "number";
   placeholder: string;
-  item: ProductType | Category | null;
 }
 
 interface ModalProps<TVariables, TResult> {

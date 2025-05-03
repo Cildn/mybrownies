@@ -228,7 +228,7 @@ export default function SettingsPage() {
       {isOpen && editingItem && (
         <SharedUpdateModal
           closeModal={closeModal}
-          item={editingItem}
+          item={editingItem as unknown as Record<string, unknown>}
           mutation={mutationType === "productType" ? UPDATE_PRODUCT_TYPE : UPDATE_CATEGORY}
           fields={
             mutationType === "productType"
@@ -284,8 +284,8 @@ export default function SettingsPage() {
       {confirmationOpen && currentAction && (
         <ConfirmationModal
           isOpen={confirmationOpen}
-          closeModalAction={() => setConfirmationOpen(false)}
-          onConfirmAction={handleConfirmedAction}
+          closeModal={() => setConfirmationOpen(false)}
+          onConfirm={handleConfirmedAction}
           actionType={currentAction}
         />
       )}
