@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 import ComponentCard from "../../common/ComponentCard";
 import Button from "../../ui/button/Button";
@@ -11,9 +10,10 @@ import { CREATE_PRODUCT } from "@/lib/graphql/mutations/product";
 import { GET_PRODUCT_TYPES } from "@/lib/graphql/queries/productTypes";
 import { GET_CATEGORIES } from "@/lib/graphql/queries/categories";
 import Alert from "@/components/ui/alert/Alert";
+import { ProductType, Category } from "@/types";
 
 interface ProductFormModalProps {
-  onClose: () => void;
+  onClose: () => void; // Renamed from onClose
 }
 
 export default function ProductFormModal({ onClose }: ProductFormModalProps) {
@@ -38,27 +38,25 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
   });
 
   // State for alerts
-  const [alert, setAlert] = useState<{
+  const [alert, setAlert] = useState<null | {
     type: "success" | "error" | "warning" | "info";
     title: string;
     message: string;
-  } | null>(null);
+  }>(null);
 
   // Fetch Product Types
-  const { loading: productTypesLoading, data: productTypesData } =
-    useQuery(GET_PRODUCT_TYPES);
+  const { data: productTypesData } = useQuery(GET_PRODUCT_TYPES);
   const productTypes = productTypesData?.productTypes || [];
 
   // Fetch Categories
-  const { loading: categoriesLoading, data: categoriesData } =
-    useQuery(GET_CATEGORIES);
+  const { data: categoriesData } = useQuery(GET_CATEGORIES);
   const categories = categoriesData?.categories || [];
 
   // Mutation for creating a product
   const [createProduct, { loading }] = useMutation(CREATE_PRODUCT);
 
   // Handle input changes
-  const handleChange = (key: keyof typeof state, value: any) => {
+  const handleChange = (key: keyof typeof state, value: string | number | string[]) => {
     setState((prevState) => ({ ...prevState, [key]: value }));
   };
 
@@ -69,7 +67,7 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
   ) => {
     const value = e.target.value;
     const items = value.split(",").map((item) => item.trim());
-    handleChange(key, items); // Update state with array
+    handleChange(key, items);
   };
 
   // Add a new size and price pair dynamically
@@ -80,37 +78,43 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
     }));
   };
 
-  const handleSizeChange = (index: number, value: string) => {
-    const updatedPairs = [...state.sizePricePairs];
-    updatedPairs[index].size = value;
-    handleChange("sizePricePairs", updatedPairs);
+  // Update size in sizePricePairs
+  const handleSizeChange = (index: number, size: string) => {
+    setState((prevState) => ({
+      ...prevState,
+      sizePricePairs: prevState.sizePricePairs.map((pair, i) =>
+        i === index ? { ...pair, size } : pair
+      ),
+    }));
   };
 
-  const handlePriceChange = (index: number, value: number) => {
-    const updatedPairs = [...state.sizePricePairs];
-    updatedPairs[index].price = value;
-    handleChange("sizePricePairs", updatedPairs);
+  // Update price in sizePricePairs
+  const handlePriceChange = (index: number, price: number) => {
+    setState((prevState) => ({
+      ...prevState,
+      sizePricePairs: prevState.sizePricePairs.map((pair, i) =>
+        i === index ? { ...pair, price } : pair
+      ),
+    }));
   };
 
+  // Remove sizePricePair
   const removeSizePricePair = (index: number) => {
-    const updatedPairs = state.sizePricePairs.filter((_, i) => i !== index);
-    handleChange("sizePricePairs", updatedPairs);
+    setState((prevState) => ({
+      ...prevState,
+      sizePricePairs: prevState.sizePricePairs.filter((_, i) => i !== index),
+    }));
   };
 
   // Handle saving the product
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const imagePaths = state.images.map(filename => `/uploads/products/images/${filename}`);
-    const videoPaths = state.videos.map(filename => `/uploads/products/videos/${filename}`);
+    const imagePaths = state.images.map((filename) => `/uploads/products/images/${filename}`);
+    const videoPaths = state.videos.map((filename) => `/uploads/products/videos/${filename}`);
 
     // Validate required fields
-    if (
-      !state.productName ||
-      !state.stock ||
-      !state.categoryId ||
-      state.images.length === 0
-    ) {
+    if (!state.productName || !state.stock || !state.categoryId || state.images.length === 0) {
       setAlert({
         type: "error",
         title: "Validation Error",
@@ -130,11 +134,11 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
           brand: state.brand,
           stock: state.stock,
           categoryId: state.categoryId,
-          images: imagePaths,  // ["/uploads/products/images/image1.jpg", ...]
-          videos: videoPaths,  // ["/uploads/products/videos/video1.mp4", ...]
+          images: imagePaths,
+          videos: videoPaths,
           materials: state.materials,
-          sizes: state.sizePricePairs.map(pair => pair.size),
-          prices: state.sizePricePairs.map(pair => pair.price),
+          sizes: state.sizePricePairs.map((pair) => pair.size),
+          prices: state.sizePricePairs.map((pair) => pair.price),
           colors: state.colors,
           isFeatured: state.isFeatured === "Yes",
         },
@@ -161,10 +165,14 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
   };
 
   // Clear alert after 5 seconds
+  const handleAlertClose = () => {
+    setAlert(null);
+  };
+
   React.useEffect(() => {
     if (alert) {
       const timer = setTimeout(() => {
-        setAlert(null);
+        handleAlertClose();
       }, 5000);
       return () => clearTimeout(timer);
     }
@@ -185,7 +193,6 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
               placeholder="Enter product name"
               value={state.productName}
               onChange={(e) => handleChange("productName", e.target.value)}
-              required
             />
           </div>
 
@@ -215,10 +222,11 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
             <Input
               type="number"
               placeholder="Enter discount rate (e.g., 10 for 10%)"
-              value={state.discountRate}
-              onChange={(e) =>
-                handleChange("discountRate", parseFloat(e.target.value))
-              }
+              value={isNaN(state.discountRate) ? "" : state.discountRate}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleChange("discountRate", value === "" ? 0 : parseFloat(value));
+              }}
             />
           </div>
 
@@ -237,12 +245,11 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
           <div className="col-span-1 sm:col-span-2">
             <Label>Product Type</Label>
             <Select
-              options={productTypes.map((type) => ({
+              options={productTypes.map((type: ProductType) => ({
                 label: type.name,
                 value: type.id,
               }))}
               placeholder="Select product type"
-              value={state.productType}
               onChange={(val) => handleChange("productType", val)}
             />
           </div>
@@ -251,14 +258,12 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
           <div className="col-span-1 sm:col-span-2">
             <Label>Category</Label>
             <Select
-              options={categories.map((category) => ({
+              options={categories.map((category: Category) => ({
                 label: category.name,
                 value: category.id,
               }))}
               placeholder="Select category"
-              value={state.categoryId}
               onChange={(val) => handleChange("categoryId", val)}
-              required
             />
           </div>
 
@@ -268,11 +273,11 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
             <Input
               type="number"
               placeholder="Enter stock"
-              value={state.stock}
-              onChange={(e) =>
-                handleChange("stock", parseInt(e.target.value))
-              }
-              required
+              value={isNaN(state.stock) ? "" : state.stock}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleChange("stock", value === "" ? 0 : parseInt(value, 10));
+              }}
             />
           </div>
 
@@ -285,13 +290,12 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
               value={state.images.join(", ")}
               onChange={(e) => {
                 const filenames = e.target.value.split(",").map((name) => name.trim());
-                // Store raw filenames in state (e.g., ["image1.jpg", "image2.png"])
-                handleChange("images", filenames); 
+                handleChange("images", filenames);
               }}
-              required
             />
           </div>
 
+          {/* Videos */}
           <div className="col-span-1 sm:col-span-2">
             <Label>Videos (comma-separated filenames)</Label>
             <Input
@@ -338,19 +342,18 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
                     placeholder="Size (e.g., S)"
                     value={pair.size}
                     onChange={(e) => handleSizeChange(index, e.target.value)}
-                    required
                   />
                 </div>
                 <div className="flex-1">
-                  <Input
-                    type="number"
-                    placeholder="Price"
-                    value={pair.price}
-                    onChange={(e) =>
-                      handlePriceChange(index, parseFloat(e.target.value))
-                    }
-                    required
-                  />
+                <Input
+                  type="number"
+                  placeholder="Price"
+                  value={isNaN(pair.price) ? "" : pair.price}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handlePriceChange(index, value === "" ? 0 : parseFloat(value));
+                  }}
+                />
                 </div>
                 <Button
                   size="sm"
@@ -362,14 +365,13 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
               </div>
             ))}
             <div className="flex justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                type="button"
+              <button
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                 onClick={addSizePricePair}
+                type = "button"
               >
                 Add Size and Price
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -420,7 +422,7 @@ export default function ProductFormModal({ onClose }: ProductFormModalProps) {
           variant={alert.type}
           title={alert.title}
           message={alert.message}
-          className="mt-4"
+          onClose={handleAlertClose}
         />
       )}
     </ComponentCard>

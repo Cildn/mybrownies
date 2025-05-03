@@ -4,10 +4,11 @@ import { Folder, Play, Music, Upload, FileText, Download } from "lucide-react";
 import MediaCard from "./MediaCard";
 import { Modal } from "@/components/ui/modal";
 import UploadFormModal from "@/components/modals/form/UploadForm";
+import { FileStats } from "@/types"; // Import the specific interface
 
 const AllMediaSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [fileStats, setFileStats] = useState<any | null>(null); // Use `any` temporarily
+  const [fileStats, setFileStats] = useState<FileStats | null>(null);
 
   // Fetch file stats from the backend
   useEffect(() => {
@@ -20,8 +21,8 @@ const AllMediaSection = () => {
         }
         const data = await response.json();
 
-        // Transform the backend response into the format expected by the UI
-        const transformedStats = {
+        // Transform the backend response into the FileStats interface
+        const transformedStats: FileStats = {
           images: {
             files: data.categories.images.count,
             usage: parseFloat(data.categories.images.percentageUsed),
@@ -48,13 +49,13 @@ const AllMediaSection = () => {
           },
           uploads: {
             files: data.categories.uploads.count,
-            usage: 0, // Not provided by the backend
+            usage: 0, // Assuming backend doesn't provide this
             size: data.categories.uploads.size,
             color: "orange",
           },
           downloads: {
             files: data.categories.downloads.count,
-            usage: 0, // Not provided by the backend
+            usage: 0, // Assuming backend doesn't provide this
             size: data.categories.downloads.size,
             color: "purple",
           },
@@ -62,7 +63,10 @@ const AllMediaSection = () => {
 
         setFileStats(transformedStats);
       } catch (error) {
-        console.error("Error fetching file stats:", error instanceof Error ? error.message : "Unknown error");
+        console.error(
+          "Error fetching file stats:",
+          error instanceof Error ? error.message : "Unknown error"
+        );
       }
     };
 

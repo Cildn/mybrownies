@@ -1,24 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 
 interface TabsProps {
   value: string;
   onChange: (value: string) => void;
   children: React.ReactNode;
 }
-
-export const Tabs: React.FC<TabsProps> = ({ value, onChange, children }) => {
-  return (
-    <div className="border-b border-gray-300 dark:border-gray-700">
-      <div className="flex space-x-4">
-        {React.Children.map(children, (child) =>
-          React.isValidElement(child)
-            ? React.cloneElement(child, { isActive: child.props.value === value, onClick: () => onChange(child.props.value) })
-            : child
-        )}
-      </div>
-    </div>
-  );
-};
 
 interface TabProps {
   value: string;
@@ -27,7 +13,26 @@ interface TabProps {
   children: React.ReactNode;
 }
 
-export const Tab: React.FC<TabProps> = ({ value, isActive, onClick, children }) => {
+export const Tabs: React.FC<TabsProps> = ({ value, onChange, children }) => {
+  return (
+    <div className="border-b border-gray-300 dark:border-gray-700">
+      <div className="flex space-x-4">
+        {React.Children.map(children, (child) => {
+          if (React.isValidElement<TabProps>(child)) {
+            const isActive = child.props.value === value;
+            return React.cloneElement(child, {
+              isActive,
+              onClick: () => onChange(child.props.value),
+            });
+          }
+          return child;
+        })}
+      </div>
+    </div>
+  );
+};
+
+export const Tab: React.FC<TabProps> = ({ isActive, onClick, children }) => {
   return (
     <button
       onClick={onClick}

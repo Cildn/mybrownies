@@ -4,15 +4,13 @@ export const MARK_ORDER_AS_PAID = gql`
   mutation MarkOrderAsPaid($orderId: ID!) {
     markOrderAsPaid(orderId: $orderId) {
       id
-      status
     }
   }
 `;
 
-
 export const MARK_ORDER_AS_COMPLETED = gql`
   mutation MarkOrderAsCompleted($orderId: ID!) {
-    markOrderAsComplete(orderId: $orderId) {
+    markOrderAsCompleted(orderId: $orderId) { 
       id
       status
     }
@@ -20,8 +18,8 @@ export const MARK_ORDER_AS_COMPLETED = gql`
 `;
 
 export const MARK_ORDER_AS_REFUNDED = gql`
-  mutation MarkOrderAsRefunded($orderId: ID!) {
-    markOrderAsComplete(orderId: $orderId) {
+  mutation MarkOrderAsRefunded($orderId: ID!) { 
+    markOrderAsRefunded(orderId: $orderId) { 
       id
       status
     }
@@ -29,8 +27,8 @@ export const MARK_ORDER_AS_REFUNDED = gql`
 `;
 
 export const MARK_ORDER_AS_CANCELLED = gql`
-  mutation MarkOrderAsCancelled($orderId: ID!) {
-    markOrderAsComplete(orderId: $orderId) {
+  mutation MarkOrderAsCancelled($orderId: ID!) { 
+    markOrderAsCancelled(orderId: $orderId) { 
       id
       status
     }

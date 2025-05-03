@@ -17,6 +17,7 @@ import {
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
+import { OrderType, OrderItemType } from "@/types";
 
 export default function OrdersTable() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -45,8 +46,8 @@ export default function OrdersTable() {
       for (const id of selectedItems) {
         await markOrderAsPaid({ variables: { orderId: id } });
       }
-      setSelectedItems([]); // Clear selection
-      window.location.reload(); // Refresh to fetch updated statuses
+      setSelectedItems([]);
+      window.location.reload();
     } catch (err) {
       console.error("Error marking orders as paid:", err);
       alert("Failed to mark orders as paid. Please try again.");
@@ -58,8 +59,8 @@ export default function OrdersTable() {
       for (const id of selectedItems) {
         await markOrderAsCompleted({ variables: { orderId: id } });
       }
-      setSelectedItems([]); // Clear selection
-      window.location.reload(); // Refresh to fetch updated statuses
+      setSelectedItems([]);
+      window.location.reload();
     } catch (err) {
       console.error("Error marking orders as completed:", err);
       alert("Failed to mark orders as completed. Please try again.");
@@ -71,21 +72,21 @@ export default function OrdersTable() {
       for (const id of selectedItems) {
         await markOrderAsCancelled({ variables: { orderId: id } });
       }
-      setSelectedItems([]); // Clear selection
-      window.location.reload(); // Refresh to fetch updated statuses
+      setSelectedItems([]);
+      window.location.reload();
     } catch (err) {
       console.error("Error marking orders as cancelled:", err);
       alert("Failed to mark orders as cancelled. Please try again.");
     }
   };
-  
+
   const handleMarkAsRefunded = async () => {
     try {
       for (const id of selectedItems) {
         await markOrderAsRefunded({ variables: { orderId: id } });
       }
-      setSelectedItems([]); // Clear selection
-      window.location.reload(); // Refresh to fetch updated statuses
+      setSelectedItems([]);
+      window.location.reload();
     } catch (err) {
       console.error("Error marking orders as refunded:", err);
       alert("Failed to mark orders as refunded. Please try again.");
@@ -114,28 +115,29 @@ export default function OrdersTable() {
         {selectedItems.length > 0 && (
           <div className="flex gap-3">
             {/* Mark as Paid */}
-            {
-              orders
-                .filter((order) => selectedItems.includes(order.id))
-                .every((order) => order.status === "Pending") && (
+            {orders
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every((order: OrderType) => order.status === "Pending") && (
               <button onClick={handleMarkAsPaid} className="bg-blue-600 text-white px-4 py-2 rounded-lg">
                 Mark as Paid
               </button>
-            )} 
+            )}
             {/* Mark as Completed */}
-            {
-              orders
-                .filter((order) => selectedItems.includes(order.id))
-                .every((order) => order.status === "Paid") && (
+            {orders
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every((order: OrderType) => order.status === "Paid") && (
               <button onClick={handleMarkAsCompleted} className="bg-green-600 text-white px-4 py-2 rounded-lg">
                 Mark as Completed
               </button>
-            )} 
+            )}
 
             {/* Mark as Cancelled */}
             {orders
-              .filter((order) => selectedItems.includes(order.id))
-              .every((order) => order.status !== "Completed" && order.status !== "Cancelled") && (
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every(
+                (order: OrderType) =>
+                  order.status !== "Completed" && order.status !== "Cancelled"
+              ) && (
               <button onClick={handleMarkAsCancelled} className="bg-red-600 text-white px-4 py-2 rounded-lg">
                 Mark as Cancelled
               </button>
@@ -143,8 +145,8 @@ export default function OrdersTable() {
 
             {/* Mark as Refunded */}
             {orders
-              .filter((order) => selectedItems.includes(order.id))
-              .every((order) => order.status === "Completed") && (
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every((order: OrderType) => order.status === "Completed") && (
               <button onClick={handleMarkAsRefunded} className="bg-purple-600 text-white px-4 py-2 rounded-lg">
                 Mark as Refunded
               </button>
@@ -163,21 +165,31 @@ export default function OrdersTable() {
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                {showCheckboxes && (
-                  <TableCell className="w-12"></TableCell>
-                )}
+                {showCheckboxes && <TableCell className="w-12">&nbsp;</TableCell>}
                 {/* Use displayId instead of id */}
-                <TableCell isHeader className="text-left pl-4">Order ID</TableCell>
-                <TableCell isHeader className="text-right pr-4">Total (₦)</TableCell>
-                <TableCell isHeader className="text-left pl-4">Status</TableCell>
-                <TableCell isHeader className="text-left pl-4">Created At</TableCell>
-                <TableCell isHeader className="text-left pl-4">Products</TableCell>
-                <TableCell isHeader className="text-left pl-4">Invoice</TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Order ID
+                </TableCell>
+                <TableCell isHeader className="text-right pr-4">
+                  Total (₦)
+                </TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Status
+                </TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Created At
+                </TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Products
+                </TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Invoice
+                </TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {orders.map((order: any) => (
+              {orders.map((order: OrderType) => (
                 <TableRow key={order.id}>
                   {showCheckboxes && (
                     <TableCell className="w-12">
@@ -196,28 +208,32 @@ export default function OrdersTable() {
                       size="sm"
                       variant="light"
                       color={
-                        order.status === "Completed" ? "success" :
-                        order.status === "Pending" ? "warning" :
-                        order.status === "Refunded" ? "info" :
-                        order.status === "Paid" ? "primary" : 
-                        "error"
+                        order.status === "Completed"
+                          ? "success"
+                          : order.status === "Pending"
+                          ? "warning"
+                          : order.status === "Refunded"
+                          ? "info"
+                          : order.status === "Paid"
+                          ? "primary"
+                          : "error"
                       }
                     >
                       {order.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-left">
-                    {new Date(Number(order.createdAt)).toLocaleDateString('en-GB')}
+                    {new Date(Number(order.createdAt)).toLocaleDateString("en-GB")}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-left">
                     <div className="flex -space-x-2">
-                      {order.orderItems.map((item: any, idx: number) => {
+                      {order.orderItems.map((item: OrderItemType, idx: number) => {
                         let imageUrl = "/images/default.jpg"; // Default fallback
 
-                        if (item?.product?.images?.length > 0) {
+                        if (item?.product?.images?.[0]) {
                           imageUrl = item.product.images[0];
-                        } else if (item?.collection?.image) {
-                          imageUrl = item.collection.image;
+                        } else if (item?.collection?.images?.[0]) {
+                          imageUrl = item.collection.images[0];
                         }
 
                         return (

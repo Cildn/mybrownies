@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, useEffect } from "react";
 import ComponentCard from "../../common/ComponentCard";
 import Button from "../../ui/button/Button";
@@ -11,6 +10,7 @@ import { UPDATE_PRODUCT } from "@/lib/graphql/mutations/product";
 import { GET_CATEGORIES } from "@/lib/graphql/queries/categories";
 import { GET_PRODUCT_TYPES } from "@/lib/graphql/queries/productTypes";
 import Alert from "@/components/ui/alert/Alert";
+import { Category, ProductType } from "@/types";
 
 interface ProductUpdateModalProps {
   onClose: () => void;
@@ -99,7 +99,10 @@ export default function ProductUpdateModal({
     });
   }, [initialData]);
 
-  const handleChange = (key: keyof typeof state, value: any) => {
+  const handleChange = (
+    key: keyof typeof state,
+    value: string | number | string[] | { size: string; price: number }[]
+  ) => {
     setState((prevState) => ({ ...prevState, [key]: value }));
   };
 
@@ -236,7 +239,7 @@ export default function ProductUpdateModal({
           <div className="col-span-1 sm:col-span-2">
             <Label>Product Type</Label>
             <Select
-              options={productTypes.map((type) => ({
+              options={productTypes.map((type: ProductType) => ({
                 label: type.name || "N/A",
                 value: type.id || "",
               }))}
@@ -250,7 +253,7 @@ export default function ProductUpdateModal({
           <div className="col-span-1 sm:col-span-2">
             <Label>Category</Label>
             <Select
-              options={categories.map((category) => ({
+              options={categories.map((category: Category) => ({
                 label: category.name || "N/A",
                 value: category.id || "",
               }))}
@@ -358,9 +361,8 @@ export default function ProductUpdateModal({
               </div>
             ))}
             <div className="flex justify-end">
-              <Button
-                size="sm"
-                variant="outline"
+              <button
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                 type="button"
                 onClick={() => {
                   setState((prevState) => ({
@@ -370,7 +372,7 @@ export default function ProductUpdateModal({
                 }}
               >
                 Add Size and Price
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -421,7 +423,7 @@ export default function ProductUpdateModal({
           variant={alert.type}
           title={alert.title}
           message={alert.message}
-          className="mt-4"
+          onClose={() => setAlert(null)}
         />
       )}
     </ComponentCard>

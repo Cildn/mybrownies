@@ -13,6 +13,14 @@ import { MARK_INVOICE_AS_PAID } from "@/lib/graphql/mutations/invoices";
 import Badge from "../ui/badge/Badge";
 import { Pencil } from "lucide-react";
 
+interface Invoice {
+  id: string;
+  displayId: string;
+  createdAt: string;
+  total: number;
+  status: "Pending" | "Paid" | "Completed" | "Cancelled" | "Refunded";
+}
+
 export default function InvoiceTable() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showCheckboxes, setShowCheckboxes] = useState(false);
@@ -90,18 +98,28 @@ export default function InvoiceTable() {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 {showCheckboxes && (
-                  <TableCell className="w-12"></TableCell>
+                  <TableCell className="w-12" />
                 )}
-                <TableCell isHeader className="text-left pl-4">Invoice ID</TableCell>
-                <TableCell isHeader className="text-left pl-4">Due Date</TableCell>
-                <TableCell isHeader className="text-right pr-4">Total (₦)</TableCell>
-                <TableCell isHeader className="text-left pl-4">Status</TableCell>
-                <TableCell isHeader className="text-left pl-4">Actions</TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Invoice ID
+                </TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Due Date
+                </TableCell>
+                <TableCell isHeader className="text-right pr-4">
+                  Total (₦)
+                </TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Status
+                </TableCell>
+                <TableCell isHeader className="text-left pl-4">
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {invoices.map((invoice: any) => (
+              {invoices.map((invoice: Invoice) => (
                 <TableRow key={invoice.id}>
                   {showCheckboxes && (
                     <TableCell className="w-12">
@@ -113,12 +131,11 @@ export default function InvoiceTable() {
                       />
                     </TableCell>
                   )}
-                  {/* Use displayId instead of id */}
                   <TableCell className="px-4 py-3 text-left">
                     {invoice.displayId ? invoice.displayId.replace(/^ORD/, "INV") : "INV-N/A"}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-left">
-                    {new Date(new Date(Number(invoice.createdAt)).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB')}
+                    {new Date(Number(invoice.createdAt)).toLocaleDateString('en-GB')}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-right">
                     ₦{invoice.total.toLocaleString()}
@@ -131,17 +148,17 @@ export default function InvoiceTable() {
                           ? "success"
                           : invoice.status === "Pending"
                           ? "warning"
-                          : invoice.status === "Overdue"
-                          ? "error"
+                          : invoice.status === "Refunded"
+                          ? "info"
                           : invoice.status === "Completed"
-                          ? "primary" : "error"
+                          ? "primary"
+                          : "error"
                       }
                     >
                       {invoice.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-left">
-                    {/* Use displayId instead of id for the download link */}
                     <a
                       href={`/uploads/records/invoices/invoice-${invoice.displayId}.pdf`}
                       target="_blank"

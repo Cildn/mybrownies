@@ -24,7 +24,7 @@ interface CartItem {
 }
 
 export default function CartSidebar() {
-  const { sessionId, isLoading: sessionLoading, error: sessionError } = useSession();
+  const { sessionId, isLoading: sessionLoading } = useSession();
   const [ready, setReady] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
 
@@ -79,7 +79,7 @@ export default function CartSidebar() {
   const handleCheckout = async () => {
     try {
       const totalAmount = cartItems.reduce(
-        (sum, item) => sum + (item.product.prices[item.selectedSizeIndex] * item.quantity),
+        (sum: number, item: CartItem) => sum + (item.product.prices[item.selectedSizeIndex] * item.quantity),
         0
       );
 
@@ -123,7 +123,7 @@ export default function CartSidebar() {
 
   const cartItems = data?.cartItems || [];
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + (item.product.prices[item.selectedSizeIndex] * item.quantity),
+    (sum: number, item: CartItem) => sum + (item.product.prices[item.selectedSizeIndex] * item.quantity),
     0
   );
 

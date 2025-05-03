@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { FileText, FileImage, FileVideo, Trash2, Eye } from "lucide-react";
+import Image from "next/image";
 
 interface FileItem {
   name: string;
@@ -34,28 +35,29 @@ const Files: React.FC<FilesProps> = ({ files, onDelete }) => {
 
   const handleDelete = async (fileName: string, folder: string) => {
     if (!confirm(`Are you sure you want to delete "${fileName}"?`)) return;
-
+  
     try {
-      const response = await fetch('https://mybrownies.com.ng/api/files/delete', {
+      const response = await fetch('/api/files/delete', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ folder, fileName }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete file');
       }
-
+  
       const data = await response.json();
       if (data.success) {
         onDelete(fileName, folder);
       }
-    } catch (error: any) {
+    } catch (error) {
+      // Remove the `any` type assertion here
       console.error("Delete error:", error);
-      alert(`Error: ${error.message}`);
+      alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -125,11 +127,13 @@ const Files: React.FC<FilesProps> = ({ files, onDelete }) => {
             </div>
             <div className="file-preview">
               {previewFile.category === "Image" && (
-                <img 
-                  src={constructFilePath(previewFile)} 
-                  alt={previewFile.name} 
-                  className="max-w-full max-h-96 rounded-lg"
-                />
+                <Image
+                src={constructFilePath(previewFile)}
+                alt={previewFile.name}
+                className="max-w-full max-h-96 rounded-lg"
+                width={800} // Add width
+                height={600} // Add height
+              />
               )}
               {previewFile.category === "Video" && (
                 <video 

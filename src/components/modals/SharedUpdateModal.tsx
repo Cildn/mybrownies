@@ -1,31 +1,35 @@
-// SharedUpdateModal.tsx
-"use client";
 import React, { useState, useEffect } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import { useMutation } from "@apollo/client";
+import { useMutation, TypedDocumentNode } from "@apollo/client";
 
-interface ModalProps<T> {
+interface FieldConfig {
+  label: string;
+  type: "text" | "number";
+  placeholder: string;
+}
+
+interface ModalProps<TVariables, TResult> {
   closeModal: () => void;
-  item: T | null;
-  mutation: any;
-  fields: { [key: string]: { label: string; type: string; placeholder: string } };
+  item: TVariables | null;
+  mutation: TypedDocumentNode<TResult, TVariables>;
+  fields: Record<keyof TVariables, FieldConfig>;
   onSubmitSuccess?: () => void;
 }
 
-export default function SharedUpdateModal<T>({
+export default function SharedUpdateModal<TVariables extends Record<string, unknown>, TResult>({
   closeModal,
   item,
   mutation,
   fields,
   onSubmitSuccess,
-}: ModalProps<T>) {
-  const [state, setState] = useState<T | null>(null);
+}: ModalProps<TVariables, TResult>) {
+  const [state, setState] = useState<TVariables | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mutate] = useMutation(mutation);
+  const [mutate] = useMutation<TResult, TVariables>(mutation);
 
   useEffect(() => {
     if (item) {
@@ -33,14 +37,12 @@ export default function SharedUpdateModal<T>({
     }
   }, [item]);
 
-  const handleChange = (key: keyof T, value: any) => {
+  const handleChange = (key: keyof TVariables, value: string) => {
     if (!state) return;
-  
-    // Convert to number if the field is of type 'number'
-    const processedValue = fields[key as string]?.type === "number" 
-      ? parseFloat(value) 
-      : value;
-  
+
+    const fieldType = fields[key]?.type;
+    const processedValue = fieldType === "number" ? parseFloat(value) : value;
+
     setState({ ...state, [key]: processedValue });
   };
 
@@ -51,7 +53,7 @@ export default function SharedUpdateModal<T>({
     setError("");
 
     try {
-      await mutate({ variables: { ...state } });
+      await mutate({ variables: state });
       closeModal();
       onSubmitSuccess?.();
     } catch (err) {
@@ -66,22 +68,30 @@ export default function SharedUpdateModal<T>({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <ComponentCard title={`Update ${Object.values(fields)[0].label.split(' ')[0]}`} className="w-full max-w-md p-6">
+      <ComponentCard
+        title={`Update ${Object.values(fields)[0].label.split(" ")[0]}`}
+        className="w-full max-w-md p-6"
+      >
         <form>
           {error && <div className="text-red-500 mb-4">{error}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {Object.entries(fields).map(([key, { label, type, placeholder }]) => (
-              <div key={key}>
-                <Label>{label}</Label>
-                <Input
-                  type={type}
-                  placeholder={placeholder}
-                  value={state[key as keyof T] || ""}
-                  onChange={(e) => handleChange(key as keyof T, e.target.value)}
-                  required
-                />
-              </div>
-            ))}
+            {(Object.entries(fields) as [keyof TVariables, FieldConfig][]).map(
+              ([key, { label, type, placeholder }]) => (
+                <div key={String(key)}>
+                  <Label>{label}</Label>
+                  <Input
+                    type={type}
+                    placeholder={placeholder}
+                    value={
+                      (state[key] !== undefined && state[key] !== null
+                        ? String(state[key])
+                        : "") as string
+                    }
+                    onChange={(e) => handleChange(key, e.target.value)}
+                  />
+                </div>
+              )
+            )}
           </div>
 
           <div className="flex items-center justify-end w-full gap-3 mt-6">

@@ -1,5 +1,3 @@
-// ConfirmationModal.tsx
-"use client";
 import React, { useState } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
@@ -38,7 +36,7 @@ export default function ConfirmationModal({
       <ComponentCard title={`Confirm ${actionType}`} className="w-full max-w-md p-6">
         <div className="mb-4">
           <p className="text-gray-700">
-            To confirm this {actionType.toLowerCase()} operation, please type "{actionType}" below:
+            To confirm this {actionType.toLowerCase()} operation, please type &quot;{actionType}&quot; below:
           </p>
           {error && <p className="mt-2 text-red-500">{error}</p>}
         </div>
@@ -47,7 +45,7 @@ export default function ConfirmationModal({
           <Input
             id="confirmation-input"
             type="text"
-            value={inputValue}
+            defaultValue={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value);
               setError("");
@@ -60,7 +58,7 @@ export default function ConfirmationModal({
             Cancel
           </Button>
           <Button
-            variant={actionType === "DELETE" ? "destructive" : "default"}
+            variant={actionType === "DELETE" ? "primary" : "primary"}
             onClick={handleConfirm}
             disabled={inputValue !== actionType}
           >

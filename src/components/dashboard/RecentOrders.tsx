@@ -1,66 +1,105 @@
-"use client";
-import React, { useState } from "react";
-import { useQuery, useMutation } from "@apollo/client";
-import { GET_RECENT_ORDERS } from "@/lib/graphql/queries/orders";
+"use client"
+import React, { useState } from "react"
+import { useQuery, useMutation } from "@apollo/client"
+import { GET_RECENT_ORDERS } from "@/lib/graphql/queries/orders"
 import {
   MARK_ORDER_AS_PAID,
   MARK_ORDER_AS_COMPLETED,
   MARK_ORDER_AS_REFUNDED,
   MARK_ORDER_AS_CANCELLED,
-} from "@/lib/graphql/mutations/orders";
+} from "@/lib/graphql/mutations/orders"
 import {
   Table,
   TableBody,
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import Badge from "../ui/badge/Badge";
-import Image from "next/image";
+} from "../ui/table"
+import Badge from "../ui/badge/Badge"
+import Image from "next/image"
+import { OrderType, OrderItemType } from "@/types"
 
 export default function RecentOrdersTable() {
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [showCheckboxes, setShowCheckboxes] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [showCheckboxes, setShowCheckboxes] = useState(false)
 
   const { data, loading, error } = useQuery(GET_RECENT_ORDERS, {
     variables: { hoursAgo: 8 },
     fetchPolicy: "network-only",
-  });
+  })
 
-  const [markOrderAsPaid] = useMutation(MARK_ORDER_AS_PAID);
-  const [markOrderAsCompleted] = useMutation(MARK_ORDER_AS_COMPLETED);
-  const [markOrderAsRefunded] = useMutation(MARK_ORDER_AS_REFUNDED);
-  const [markOrderAsCancelled] = useMutation(MARK_ORDER_AS_CANCELLED);
+  const [markOrderAsPaid] = useMutation(MARK_ORDER_AS_PAID)
+  const [markOrderAsCompleted] = useMutation(MARK_ORDER_AS_COMPLETED)
+  const [markOrderAsRefunded] = useMutation(MARK_ORDER_AS_REFUNDED)
+  const [markOrderAsCancelled] = useMutation(MARK_ORDER_AS_CANCELLED)
 
-  const orders = data?.recentOrders || [];
+  const orders = data?.recentOrders || []
 
   const toggleSelection = (id: string) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
+    )
+  }
 
   const toggleCheckboxes = () => {
-    setShowCheckboxes((v) => !v);
-    setSelectedItems([]);
-  };
+    setShowCheckboxes((prev) => !prev)
+    setSelectedItems([])
+  }
 
-  const batch = async (fn) => {
+  const handleMarkAsPaid = async () => {
     try {
       for (const id of selectedItems) {
-        // wrap orderId in `variables`
-        await fn({ variables: { orderId: id } });
+        await markOrderAsPaid({ variables: { orderId: id } })
       }
-      setSelectedItems([]);
-      window.location.reload();
+      setSelectedItems([])
+      window.location.reload()
     } catch (err) {
-      console.error(err);
-      alert("Operation failed. Please try again.");
+      console.error(err)
+      alert("Operation failed. Please try again.")
     }
-  };
+  }
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error loading orders</p>;
+  const handleMarkAsCompleted = async () => {
+    try {
+      for (const id of selectedItems) {
+        await markOrderAsCompleted({ variables: { orderId: id } })
+      }
+      setSelectedItems([])
+      window.location.reload()
+    } catch (err) {
+      console.error(err)
+      alert("Operation failed. Please try again.")
+    }
+  }
+
+  const handleMarkAsCancelled = async () => {
+    try {
+      for (const id of selectedItems) {
+        await markOrderAsCancelled({ variables: { orderId: id } })
+      }
+      setSelectedItems([])
+      window.location.reload()
+    } catch (err) {
+      console.error(err)
+      alert("Operation failed. Please try again.")
+    }
+  }
+
+  const handleMarkAsRefunded = async () => {
+    try {
+      for (const id of selectedItems) {
+        await markOrderAsRefunded({ variables: { orderId: id } })
+      }
+      setSelectedItems([])
+      window.location.reload()
+    } catch (err) {
+      console.error(err)
+      alert("Operation failed. Please try again.")
+    }
+  }
+
+  if (loading) return <p>Loading...</p>
+  if (error) return <p>Error loading recent orders</p>
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
@@ -74,42 +113,33 @@ export default function RecentOrdersTable() {
         {selectedItems.length > 0 && (
           <div className="flex gap-3">
             {orders
-              .filter((o) => selectedItems.includes(o.id))
-              .every((o) => o.status === "Pending") && (
-              <button
-                onClick={() => batch(markOrderAsPaid)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-              >
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every((order: OrderType) => order.status === "Pending") && (
+              <button onClick={handleMarkAsPaid} className="bg-blue-600 text-white px-4 py-2 rounded-lg">
                 Mark as Paid
               </button>
             )}
             {orders
-              .filter((o) => selectedItems.includes(o.id))
-              .every((o) => o.status === "Paid") && (
-              <button
-                onClick={() => batch(markOrderAsCompleted)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg"
-              >
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every((order: OrderType) => order.status === "Paid") && (
+              <button onClick={handleMarkAsCompleted} className="bg-green-600 text-white px-4 py-2 rounded-lg">
                 Mark as Completed
               </button>
             )}
             {orders
-              .filter((o) => selectedItems.includes(o.id))
-              .every((o) => o.status !== "Completed" && o.status !== "Cancelled") && (
-              <button
-                onClick={() => batch(markOrderAsCancelled)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg"
-              >
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every(
+                (order: OrderType) =>
+                  order.status !== "Completed" && order.status !== "Cancelled"
+              ) && (
+              <button onClick={handleMarkAsCancelled} className="bg-red-600 text-white px-4 py-2 rounded-lg">
                 Mark as Cancelled
               </button>
             )}
             {orders
-              .filter((o) => selectedItems.includes(o.id))
-              .every((o) => o.status === "Completed") && (
-              <button
-                onClick={() => batch(markOrderAsRefunded)}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg"
-              >
+              .filter((order: OrderType) => selectedItems.includes(order.id))
+              .every((order: OrderType) => order.status === "Completed") && (
+              <button onClick={handleMarkAsRefunded} className="bg-purple-600 text-white px-4 py-2 rounded-lg">
                 Mark as Refunded
               </button>
             )}
@@ -122,7 +152,7 @@ export default function RecentOrdersTable() {
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                {showCheckboxes && <TableCell className="w-12"></TableCell>}
+                {showCheckboxes && <TableCell className="w-12">&nbsp;</TableCell>}
                 <TableCell isHeader className="text-left pl-4">
                   Order ID
                 </TableCell>
@@ -145,7 +175,7 @@ export default function RecentOrdersTable() {
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {orders.map((order: any) => (
+              {orders.map((order: OrderType) => (
                 <TableRow key={order.id}>
                   {showCheckboxes && (
                     <TableCell className="w-12">
@@ -153,15 +183,12 @@ export default function RecentOrdersTable() {
                         type="checkbox"
                         checked={selectedItems.includes(order.id)}
                         onChange={() => toggleSelection(order.id)}
+                        className="text-blue-600"
                       />
                     </TableCell>
                   )}
-                  <TableCell className="px-4 py-3 text-left">
-                    {order.displayId}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-right">
-                    ₦{order.total.toLocaleString()}
-                  </TableCell>
+                  <TableCell className="px-4 py-3 text-left">{order.displayId}</TableCell>
+                  <TableCell className="px-4 py-3 text-right">₦{order.total.toLocaleString()}</TableCell>
                   <TableCell className="px-4 py-3 text-left">
                     <Badge
                       size="sm"
@@ -186,20 +213,25 @@ export default function RecentOrdersTable() {
                   </TableCell>
                   <TableCell className="px-4 py-3 text-left">
                     <div className="flex -space-x-2">
-                      {order.orderItems.map((item: any, idx: number) => {
-                        let url = "/images/default.jpg";
-                        if (item.product?.images?.length) url = item.product.images[0];
-                        else if (item.collection?.image) url = item.collection.image;
+                      {order.orderItems.map((item: OrderItemType, idx: number) => {
+                        let imageUrl = "/images/default.jpg" // Default fallback
+
+                        if (item?.product?.images?.length) {
+                          imageUrl = item.product.images[0]
+                        } else if (item?.collection?.images?.length) {
+                          imageUrl = item.collection.images[0]
+                        }
+
                         return (
                           <Image
                             key={idx}
                             width={30}
                             height={30}
-                            src={url}
-                            alt=""
+                            src={imageUrl}
+                            alt="Product or Collection"
                             className="rounded-full border"
                           />
-                        );
+                        )
                       })}
                     </div>
                   </TableCell>
@@ -207,6 +239,7 @@ export default function RecentOrdersTable() {
                     <a
                       href={`/uploads/records/invoices/invoice-${order.displayId}.pdf`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="text-blue-600 hover:underline"
                     >
                       Download
@@ -219,5 +252,5 @@ export default function RecentOrdersTable() {
         </div>
       </div>
     </div>
-  );
+  )
 }

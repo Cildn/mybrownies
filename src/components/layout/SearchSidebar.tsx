@@ -120,7 +120,7 @@ export default function SearchSidebar() {
 
       {data && results.products.length === 0 && results.collections.length === 0 && (
         <div className="text-center py-10 text-gray-500">
-          <p>No results found for "{searchQuery}"</p>
+          <p>No results found for &quot;{searchQuery}&quot;</p>
         </div>
       )}
     </div>

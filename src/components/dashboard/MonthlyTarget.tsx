@@ -6,23 +6,51 @@ import { GET_MONTHLY_TARGET } from "@/lib/graphql/queries/chart";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+interface ApexOptions {
+  colors: string[];
+  chart: {
+    fontFamily: string;
+    type: "radialBar"; // Explicitly set to "radialBar"
+    height: number;
+    sparkline: { enabled: boolean };
+  };
+  plotOptions: {
+    radialBar: {
+      startAngle: number;
+      endAngle: number;
+      hollow: { size: string };
+      track: { background: string; strokeWidth: string; margin: number };
+      dataLabels: {
+        name: { show: boolean };
+        value: {
+          fontSize: string;
+          fontWeight: string;
+          offsetY: number;
+          color: string;
+          formatter: (val: number) => string;
+        };
+      };
+    };
+  };
+  fill: { type: "solid"; colors: string[] };
+  stroke: { lineCap: "round" };
+  labels: string[];
+}
+
 export default function MonthlyTarget() {
   const { data, loading, error } = useQuery(GET_MONTHLY_TARGET);
 
-  // Default values for destructuring
   const { monthlyTarget = 0, actualRevenue = 0, todayRevenue = 0, dailyProgress = 0 } =
     data?.monthlyTarget || {};
 
-  // Calculate progress percentage
   const progress = useMemo(() => {
     if (monthlyTarget === 0) return 0;
-    return Math.min((actualRevenue / monthlyTarget) * 100, 100); // Cap at 100%
+    return Math.min((actualRevenue / monthlyTarget) * 100, 100);
   }, [monthlyTarget, actualRevenue]);
 
-  // Memoize series and options outside of conditional logic
   const series = useMemo(() => [progress], [progress]);
 
-  const options = useMemo(() => {
+  const options: ApexOptions = useMemo(() => {
     return {
       colors: ["#465FFF"],
       chart: {
@@ -76,7 +104,6 @@ export default function MonthlyTarget() {
             <ReactApexChart options={options} series={series} type="radialBar" height={330} />
           </div>
 
-          {/* Dynamic Daily Progress Label */}
           <span
             className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-[95%] rounded-full px-3 py-1 text-xs font-medium ${
               dailyProgress >= 0 ? "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-600" : "bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-600"

@@ -7,9 +7,10 @@ import { Users } from "lucide-react";
 import { GET_TOTAL_ORDERS_FOR_TWO_PERIODS } from "@/lib/graphql/queries/chart";
 
 export const EcommerceMetrics = () => {
-  const [selectedPeriod, setSelectedPeriod] = React.useState("Monthly");
+  const [selectedPeriod] = React.useState("Monthly");
+
   const { data, loading, error } = useQuery(GET_TOTAL_ORDERS_FOR_TWO_PERIODS, {
-    variables: { period: selectedPeriod.toLowerCase() }, // Pass the selected period
+    variables: { period: selectedPeriod.toLowerCase() },
   });
 
   if (loading) return <p>Loading...</p>;
@@ -18,15 +19,15 @@ export const EcommerceMetrics = () => {
   const { currentOrders, previousOrders } = data?.totalOrdersForTwoPeriods || {};
   const totalOrders = currentOrders || 0;
 
-  // Calculate percentage change
   let percentageChange = 0;
   if (previousOrders > 0) {
     percentageChange = ((currentOrders - previousOrders) / previousOrders) * 100;
   }
 
-  // Determine badge color and arrow direction
-  let badgeColor = "warning"; // Default to yellow
-  let arrow = null;
+  // Ensure badgeColor is explicitly typed as BadgeColor
+  let badgeColor: "primary" | "success" | "error" | "warning" | "info" | "light" | "dark" =
+    "warning"; // Default to yellow
+  let arrow: React.ReactNode = null;
 
   if (percentageChange > 0) {
     badgeColor = "success"; // Green for positive growth
@@ -38,7 +39,7 @@ export const EcommerceMetrics = () => {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-      {/* <!-- Metric Item Start --> */}
+      {/* Customers Metric */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <Users className="text-gray-800 size-6 dark:text-white/90" />
@@ -52,13 +53,11 @@ export const EcommerceMetrics = () => {
           </div>
           <Badge color="success">
             <ArrowUp />
-            
           </Badge>
         </div>
       </div>
-      {/* <!-- Metric Item End --> */}
 
-      {/* <!-- Metric Item Start --> */}
+      {/* Orders Metric */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <BoxIconLine className="text-gray-800 dark:text-white/90" />
@@ -75,7 +74,6 @@ export const EcommerceMetrics = () => {
           </Badge>
         </div>
       </div>
-      {/* <!-- Metric Item End --> */}
     </div>
   );
 };

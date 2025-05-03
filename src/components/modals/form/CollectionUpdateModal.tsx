@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, useEffect } from "react";
 import { debounce } from 'lodash';
 import ComponentCard from "../../common/ComponentCard";
@@ -32,6 +31,19 @@ interface Collection {
   status: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  prices: number[];
+  sizes: string[] | null;
+  colors: string[] | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function CollectionUpdateModal({
   onClose,
   initialData,
@@ -59,17 +71,17 @@ export default function CollectionUpdateModal({
   });
   const searchResults = searchData?.search.products || [];
 
-  const [updateCollection, { loading, error }] = useMutation(UPDATE_COLLECTION);
+  const [updateCollection, { loading }] = useMutation(UPDATE_COLLECTION);
 
   // Track selected size for each product during selection
   const [selectedSize, setSelectedSize] = useState<{ [key: string]: number }>({});
 
-  const handleChange = (key: keyof typeof state, value: any) => {
+  const handleChange = (key: keyof typeof state, value: string | number | string[]) => {
     setState((prevState) => ({ ...prevState, [key]: value }));
   };
 
   const handleProductSelect = (productId: string, sizeIndex: number, colorIndex: number) => {
-    const selectedProduct = searchResults.find((p) => p.id === productId);
+    const selectedProduct = searchResults.find((p: Product) => p.id === productId);
     if (!selectedProduct || !selectedProduct.prices || isNaN(selectedProduct.prices[sizeIndex])) {
       alert("Invalid product price. Please check the product details.");
       return;
@@ -165,7 +177,12 @@ export default function CollectionUpdateModal({
         alert("Error updating collection: " + errors[0].message);
       } else if (data && data.updateCollection) {
         alert("Collection updated successfully!");
-        onClose();
+        if (typeof onClose === "function") {
+          onClose(); // Call only if it's a function
+        } else {
+          console.error("onClose is not a function");
+        }
+      
         onSubmitSuccess();
       } else {
         console.error("Unexpected response from GraphQL mutation:", data);
@@ -195,7 +212,6 @@ export default function CollectionUpdateModal({
               placeholder="Enter collection name"
               value={state.collectionName}
               onChange={(e) => handleChange("collectionName", e.target.value)}
-              required
             />
           </div>
           <div className="col-span-1 sm:col-span-2">
@@ -217,14 +233,13 @@ export default function CollectionUpdateModal({
           <div className="col-span-1 sm:col-span-2">
             <Label>Category</Label>
             <Select
-              options={categories.map((cat) => ({
+              options={categories.map((cat: Category) => ({
                 label: cat.name,
                 value: cat.id,
               }))}
               placeholder="Select category"
               value={state.categoryId}
               onChange={(val) => handleChange("categoryId", val)}
-              required
             />
           </div>
           <div className="col-span-1 sm:col-span-2">
@@ -239,12 +254,12 @@ export default function CollectionUpdateModal({
               {searchTerm && (
                 <div className="absolute z-10 w-full bg-white border border-gray-200 rounded mt-1 max-h-60 overflow-y-auto">
                   {searchResults.length > 0 ? (
-                    searchResults.map((product) => (
+                    searchResults.map((product: Product) => (
                       <div key={product.id} className="px-4 py-2">
                         <div className="font-medium text-sm mb-2">{product.name}</div>
                         
                         <div className="flex gap-2 mb-2">
-                          {product.sizes?.map((size, sizeIdx) => (
+                          {product.sizes?.map((size: string, sizeIdx: number) => (
                             <button
                               key={sizeIdx}
                               type="button"
@@ -253,14 +268,14 @@ export default function CollectionUpdateModal({
                                 selectedSize[product.id] === sizeIdx ? 'border-2 border-blue-500' : ''
                               }`}
                             >
-                              {size} (${product.prices[sizeIdx]})
+                              {size} (${product.prices[sizeIdx] || 0})
                             </button>
-                          ))}
+                          )) || []}
                         </div>
 
                         {product.colors && product.colors.length > 0 && selectedSize[product.id] !== undefined && (
                           <div className="flex gap-2">
-                            {product.colors.map((color, colorIdx) => (
+                            {product.colors.map((color: string, colorIdx: number) => (
                               <button
                                 key={colorIdx}
                                 type="button"
@@ -303,7 +318,7 @@ export default function CollectionUpdateModal({
             </div>
           </div>
           <div className="col-span-1 sm:col-span-2">
-            <Label>Images (comma-separated filenames, e.g., "image1.jpg, image2.png")</Label>
+            <Label>Images (comma-separated filenames, e.g., &quot;image1.jpg, image2.png&quot;)</Label>
             <Input
               type="text"
               placeholder="image1.jpg, image2.png"
@@ -312,12 +327,11 @@ export default function CollectionUpdateModal({
                 const filenames = e.target.value.split(",").map((name) => name.trim());
                 handleChange("images", filenames);
               }}
-              required
             />
           </div>
 
           <div className="col-span-1 sm:col-span-2">
-            <Label>Videos (comma-separated filenames, e.g., "video1.mp4")</Label>
+            <Label>Videos (comma-separated filenames, e.g., &quot;video1.mp4&quot;)</Label>
             <Input
               type="text"
               placeholder="video1.mp4"
@@ -334,7 +348,10 @@ export default function CollectionUpdateModal({
               type="number"
               placeholder="10"
               value={state.discountRate}
-              onChange={(e) => handleChange("discountRate", parseInt(e.target.value))}
+              onChange={(e) => {
+                const parsedValue = parseInt(e.target.value) || 0; // Parse and handle NaN
+                handleChange("discountRate", parsedValue);
+              }}
             />
           </div>
           <div className="col-span-1">
@@ -352,12 +369,11 @@ export default function CollectionUpdateModal({
               placeholder="Select status"
               value={state.status}
               onChange={(val) => handleChange("status", val)}
-              required
             />
           </div>
         </div>
         <div className="flex items-center justify-end w-full gap-3 mt-6">
-          <Button size="sm" type="submit" disabled={loading}>
+          <Button size="sm" variant="primary" disabled={loading}>
             {loading ? "Saving..." : "Save Collection"}
           </Button>
         </div>

@@ -11,7 +11,8 @@ export const uploadFile = async (file: File, folder: string) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error("Upload failed");
+    console.error("Upload file error:", error);
+    throw error;
   }
 };
 
@@ -50,6 +51,7 @@ export const getFolderContents = async (folderPath: string = "") => {
     const response = await axios.get(`/api/folders/${encodeURIComponent(folderPath)}`);
     return response.data;
   } catch (error) {
-    throw new Error("Failed to fetch folder contents");
+    console.error ("Failed to fetch folder contents");
+    throw error;
   }
 };

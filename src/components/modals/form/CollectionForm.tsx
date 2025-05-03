@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { debounce } from 'lodash';
 import ComponentCard from "../../common/ComponentCard";
 import Button from "../../ui/button/Button";
@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { CREATE_COLLECTION } from "@/lib/graphql/mutations/collections";
 import { GET_CATEGORIES } from "@/lib/graphql/queries/categories";
 import { SEARCH_QUERY } from "@/lib/graphql/queries/search";
+import { Product, Category } from "@/types";
 
 export default function CollectionFormModal() {
   const [state, setState] = useState({
@@ -39,19 +40,19 @@ export default function CollectionFormModal() {
     variables: { query: searchTerm },
     skip: !searchTerm,
   });
-  const searchResults = searchData?.search.products || [];
+  const searchResults = searchData?.search.products || [] as Product[];
 
-  const [createCollection, { loading, error }] = useMutation(CREATE_COLLECTION);
+  const [createCollection, { loading }] = useMutation(CREATE_COLLECTION);
 
   // Track selected size for each product during selection
   const [selectedSize, setSelectedSize] = useState<{ [key: string]: number }>({});
 
-  const handleChange = (key: keyof typeof state, value: any) => {
+  const handleChange = (key: keyof typeof state, value: string | number | string[]) => {
     setState((prevState) => ({ ...prevState, [key]: value }));
   };
 
   const handleProductSelect = (productId: string, sizeIndex: number, colorIndex: number) => {
-    const selectedProduct = searchResults.find((p) => p.id === productId);
+    const selectedProduct = searchResults.find((p: Product) => p.id === productId);
     if (!selectedProduct || !selectedProduct.prices || isNaN(selectedProduct.prices[sizeIndex])) {
       alert("Invalid product price. Please check the product details.");
       return;
@@ -96,12 +97,6 @@ export default function CollectionFormModal() {
     }, 300)(e.target.value);
   };
 
-  useEffect(() => {
-    if (!searchTerm) {
-      setSearchTerm("");
-    }
-  }, [searchTerm]);
-
   const removeProduct = (productId: string, size: string, color: string) => {
     setState((prevState) => ({
       ...prevState,
@@ -120,9 +115,9 @@ export default function CollectionFormModal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-  const imagePaths = state.images.map(filename => `/uploads/collections/images/${filename}`);
-  const videoPaths = state.videos.map(filename => `/uploads/collections/videos/${filename}`);
-  
+    const imagePaths = state.images.map(filename => `/uploads/collections/images/${filename}`);
+    const videoPaths = state.videos.map(filename => `/uploads/collections/videos/${filename}`);
+    
     // Validate required fields
     if (
       !state.collectionName ||
@@ -166,8 +161,8 @@ export default function CollectionFormModal() {
           categoryId: state.categoryId,
           productIds,
           productVariants,
-          images: imagePaths,  // ["/uploads/collections/images/image1.jpg", ...]
-          videos: videoPaths,  // ["/uploads/collections/videos/video1.mp4", ...]
+          images: imagePaths,
+          videos: videoPaths,
           price: calculateTotalPrice(),
           status: state.status,
         },
@@ -206,7 +201,6 @@ export default function CollectionFormModal() {
               placeholder="Enter collection name"
               value={state.collectionName}
               onChange={(e) => handleChange("collectionName", e.target.value)}
-              required
             />
           </div>
           <div className="col-span-1 sm:col-span-2">
@@ -228,14 +222,13 @@ export default function CollectionFormModal() {
           <div className="col-span-1 sm:col-span-2">
             <Label>Category</Label>
             <Select
-              options={categories.map((cat) => ({
+              options={categories.map((cat: Category) => ({
                 label: cat.name,
                 value: cat.id,
-              }))}
+              })) || []}
               placeholder="Select category"
               value={state.categoryId}
               onChange={(val) => handleChange("categoryId", val)}
-              required
             />
           </div>
           <div className="col-span-1 sm:col-span-2">
@@ -250,12 +243,12 @@ export default function CollectionFormModal() {
               {searchTerm && (
                 <div className="absolute z-10 w-full bg-white border border-gray-200 rounded mt-1 max-h-60 overflow-y-auto">
                   {searchResults.length > 0 ? (
-                    searchResults.map((product) => (
+                    searchResults.map((product: Product) => (
                       <div key={product.id} className="px-4 py-2">
                         <div className="font-medium text-sm mb-2">{product.name}</div>
                         
                         <div className="flex gap-2 mb-2">
-                          {product.sizes?.map((size, sizeIdx) => (
+                          {product.sizes?.map((size: string, sizeIdx: number) => (
                             <button
                               key={sizeIdx}
                               type="button"
@@ -264,14 +257,14 @@ export default function CollectionFormModal() {
                                 selectedSize[product.id] === sizeIdx ? 'border-2 border-blue-500' : ''
                               }`}
                             >
-                              {size} (${product.prices[sizeIdx]})
+                              {size} (${product.prices[sizeIdx] || 0})
                             </button>
-                          ))}
+                          )) || []}
                         </div>
 
                         {product.colors && product.colors.length > 0 && selectedSize[product.id] !== undefined && (
                           <div className="flex gap-2">
-                            {product.colors.map((color, colorIdx) => (
+                            {product.colors.map((color: string, colorIdx: number) => (
                               <button
                                 key={colorIdx}
                                 type="button"
@@ -321,7 +314,6 @@ export default function CollectionFormModal() {
                 // Store raw filenames in state (e.g., ["image1.jpg", "image2.png"])
                 handleChange("images", filenames); 
               }}
-              required
             />
           </div>
 
@@ -364,12 +356,11 @@ export default function CollectionFormModal() {
               placeholder="Select status"
               value={state.status}
               onChange={(val) => handleChange("status", val)}
-              required
             />
           </div>
         </div>
         <div className="flex items-center justify-end w-full gap-3 mt-6">
-          <Button size="sm" type="submit" disabled={loading}>
+          <Button size="sm" variant="primary" disabled={loading}>
             {loading ? "Saving..." : "Save Collection"}
           </Button>
         </div>

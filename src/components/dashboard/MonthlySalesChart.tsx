@@ -7,18 +7,47 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
+interface ApexOptions {
+  colors: string[];
+  chart: {
+    fontFamily: string;
+    type: "area" | "line" | "bar" | "pie" | "donut" | "radialBar" | "scatter" | "bubble" | "heatmap" | "candlestick" | "boxPlot" | "radar" | "polarArea" | "rangeBar" | "rangeArea" | "treemap";
+    height: number;
+    toolbar: { show: boolean };
+  };
+  plotOptions: {
+    bar: {
+      horizontal: boolean;
+      columnWidth: string;
+      borderRadius: number;
+      borderRadiusApplication: "end" | "around" | undefined;
+    };
+  };
+  dataLabels: { enabled: boolean };
+  xaxis: {
+    categories: string[] | undefined;
+    axisBorder: { show: boolean };
+    axisTicks: { show: boolean };
+  };
+  yaxis: { title: { text: string | undefined } };
+  tooltip: {
+    x: { show: boolean };
+    y: { formatter: (val: number) => string };
+  };
+  responsive: { breakpoint: number; options: object }[];
+}
+
 export default function MonthlySalesChart({ period = "Monthly" }) {
   const { data, loading, error } = useQuery(GET_REVENUE_BY_PERIOD, {
     variables: { period },
   });
 
-  // Memoize options to prevent unnecessary re-renders
-  const options = useMemo(() => {
+  const options: ApexOptions = useMemo(() => {
     return {
       colors: ["#465fff"],
       chart: {
         fontFamily: "Outfit, sans-serif",
-        type: "bar", // Explicitly typed as "bar"
+        type: "bar",
         height: 180,
         toolbar: { show: false },
       },
@@ -27,12 +56,12 @@ export default function MonthlySalesChart({ period = "Monthly" }) {
           horizontal: false,
           columnWidth: "39%",
           borderRadius: 5,
-          borderRadiusApplication: "end",
+          borderRadiusApplication: "end" as const, // Explicitly cast as "end"
         },
       },
       dataLabels: { enabled: false },
       xaxis: {
-        categories: data?.revenueByPeriod?.periodLabels || [],
+        categories: data?.revenueByPeriod?.periodLabels,
         axisBorder: { show: false },
         axisTicks: { show: false },
       },
@@ -53,7 +82,6 @@ export default function MonthlySalesChart({ period = "Monthly" }) {
     };
   }, [data?.revenueByPeriod?.periodLabels]);
 
-  // Memoize series to prevent unnecessary re-renders
   const series = useMemo(() => {
     return [{ name: "Sales", data: data?.revenueByPeriod?.revenueData || [] }];
   }, [data?.revenueByPeriod?.revenueData]);

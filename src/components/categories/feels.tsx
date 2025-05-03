@@ -9,33 +9,20 @@ import { useQuery } from "@apollo/client";
 import { GET_PRODUCTS } from "@/lib/graphql/queries/products";
 import { GET_COLLECTIONS } from "@/lib/graphql/queries/collections";
 import { GET_CATEGORY_BY_NAME } from "@/lib/graphql/queries/categories";
-
-interface ProductType {
-  id: string;
-  name: string;
-  category: { name: string };
-  sizes: string[];
-  prices: number[];
-  isFeatured: boolean;
-}
-
-interface CollectionType {
-  id: string;
-  name: string;
-  category: { name: string };
-}
+import { Product, Collection } from "@/types";
 
 interface FiltersType {
+  colors: string[];
   sizes: string[];
   priceRange: string | null;
   sortBy?: string;
 }
 
 export default function FeelsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [sidebarType, setSidebarType] = useState<"filter" | null>(null);
   const [activeTab, setActiveTab] = useState<"products" | "collections">("products");
   const [filters, setFilters] = useState<FiltersType>({
+    colors: [],
     sizes: [],
     priceRange: null,
     sortBy: undefined,
@@ -50,16 +37,18 @@ export default function FeelsPage() {
   const { loading: lc, error: ec, data: cd } = useQuery(GET_COLLECTIONS);
 
   const categoryVideo = catData?.category?.video || "/placeholder-video.mp4";
-  const allProducts = pd?.products || [];
-  const allCollections = cd?.collections || [];
+
+  // Memoize allProducts and allCollections
+  const allProducts = useMemo(() => pd?.products || [], [pd]);
+  const allCollections = useMemo(() => cd?.collections || [], [cd]);
 
   // Filter & sort products
   const filteredProducts = useMemo(() => {
     return allProducts
-      .filter((p: ProductType) => {
+      .filter((p: Product) => {
         if (p.category?.name !== "Feels") return false; // Ensure category matches
-        if (!p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-        if (filters.sizes.length && !p.sizes.some((s) => filters.sizes.includes(s))) return false;
+        if (filters.colors.length && !filters.colors.includes(p.colors[0])) return false;
+        if (filters.sizes.length && !p.sizes.some((s: string) => filters.sizes.includes(s))) return false;
         if (filters.priceRange) {
           const price = p.prices[0];
           switch (filters.priceRange) {
@@ -79,21 +68,20 @@ export default function FeelsPage() {
         }
         return true;
       })
-      .sort((a: ProductType, b: ProductType) => {
+      .sort((a: Product, b: Product) => {
         if (a.isFeatured && !b.isFeatured) return -1;
         if (!a.isFeatured && b.isFeatured) return 1;
         return a.name.localeCompare(b.name);
       });
-  }, [allProducts, searchQuery, filters]);
+  }, [allProducts, filters]);
 
   // Filter collections (unaffected by product filters)
   const filteredCollections = useMemo(() => {
-    return allCollections.filter((c: CollectionType) => {
+    return allCollections.filter((c: Collection) => {
       if (c.category?.name !== "Feels") return false; // Ensure category matches
-      if (!c.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
-  }, [allCollections, searchQuery]);
+  }, [allCollections]);
 
   const handleFilterChange = (type: keyof FiltersType, value: string) => {
     setFilters((prev) => {
@@ -159,7 +147,7 @@ export default function FeelsPage() {
           onFilterChange={handleFilterChange}
           onDone={() => setSidebarType(null)}
           onClearAll={() =>
-            setFilters({ sizes: [], priceRange: null, sortBy: undefined })
+            setFilters({ colors: [], sizes: [], priceRange: null, sortBy: undefined })
           }
         />
 
@@ -171,7 +159,7 @@ export default function FeelsPage() {
         >
           <AnimatePresence>
             {activeTab === "products" ? (
-              filteredProducts.map((p) => (
+              filteredProducts.map((p: Product) => ( // Explicitly type 'p' as Product
                 <div key={p.id} className="relative">
                   {p.isFeatured && (
                     <div className="absolute top-2 left-2 bg-black text-white px-2 py-1 text-xs z-10">
@@ -182,7 +170,9 @@ export default function FeelsPage() {
                 </div>
               ))
             ) : (
-              filteredCollections.map((c) => <CollectionCard key={c.id} collection={c} />)
+              filteredCollections.map((c: Collection) => ( // Explicitly type 'c' as Collection
+                <CollectionCard key={c.id} collection={c} />
+              ))
             )}
           </AnimatePresence>
         </motion.section>

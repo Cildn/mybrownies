@@ -22,13 +22,15 @@ import {
 import { useModal } from "@/lib/hooks/useModal";
 import SharedUpdateModal from "@/components/modals/SharedUpdateModal";
 import ConfirmationModal from "@/components/modals/ConfirmationModal";
+import type { ProductType, Category } from "@/types";
+import Image from "next/image";
 
 const settingsCategories = ["Product Types & Pricing", "Product Categories"];
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState(settingsCategories[0]);
   const { isOpen, openModal, closeModal } = useModal();
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<ProductType | Category | null>(null);
   const [mutationType, setMutationType] = useState("");
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<"UPDATE" | "DELETE" | null>(null);
@@ -36,23 +38,22 @@ export default function SettingsPage() {
   const [itemType, setItemType] = useState<"productType" | "category">("productType");
 
   // Product Types State
-  const [productTypes, setProductTypes] = useState<any[]>([]);
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [newType, setNewType] = useState("");
   const [newRate, setNewRate] = useState("");
 
   // Categories State
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [newCategoryImage, setNewCategoryImage] = useState("");
   const [newCategoryVideo, setNewCategoryVideo] = useState("");
 
   // Queries and Mutations
-  const { loading: productTypesLoading, data: productTypesData } =
-    useQuery(GET_PRODUCT_TYPES);
+  const { data: productTypesData } = useQuery(GET_PRODUCT_TYPES);
   const [createProductType] = useMutation(CREATE_PRODUCT_TYPE);
   const [deleteProductType] = useMutation(DELETE_PRODUCT_TYPE);
 
-  const { loading: categoriesLoading, data: categoriesData } = useQuery(GET_CATEGORIES);
+  const { data: categoriesData } = useQuery(GET_CATEGORIES);
   const [createCategory] = useMutation(CREATE_CATEGORY);
   const [deleteCategory] = useMutation(DELETE_CATEGORY);
 
@@ -81,7 +82,7 @@ export default function SettingsPage() {
   };
 
   // Trigger Update Modal after confirmation
-  const triggerUpdateModal = (item: any, type: string) => {
+  const triggerUpdateModal = (item: ProductType | Category, type: "productType" | "category") => {
     setEditingItem(item);
     setMutationType(type);
     openModal();
@@ -97,7 +98,7 @@ export default function SettingsPage() {
             percentageRate: parseFloat(newRate),
           },
         });
-        setProductTypes([...productTypes, data.createProductType]);
+        setProductTypes((prev) => [...prev, data.createProductType as ProductType]);
         setNewType("");
         setNewRate("");
       } catch (err) {
@@ -120,7 +121,7 @@ export default function SettingsPage() {
 
     // Construct the full image and video paths
     const basePath = "/uploads/categories";
-    const categoryName = newCategory.toLowerCase().replace(/\s+/g, '-'); // Convert to lowercase and replace spaces with hyphens
+    const categoryName = newCategory.toLowerCase().replace(/\s+/g, '-');
     const fullImagePath = `${basePath}/${categoryName}/images/${newCategoryImage}`;
     const fullVideoPath = `${basePath}/${categoryName}/videos/${newCategoryVideo}`;
 
@@ -128,15 +129,12 @@ export default function SettingsPage() {
       const { data } = await createCategory({
         variables: {
           name: newCategory,
-          image: fullImagePath, // Use the constructed full path
+          image: fullImagePath,
           video: fullVideoPath,
         },
       });
 
-      // Update the categories state with the new category
-      setCategories([...categories, data.createCategory]);
-
-      // Reset the form fields
+      setCategories((prev) => [...prev, data.createCategory as Category]);
       setNewCategory("");
       setNewCategoryImage("");
       setNewCategoryVideo("");
@@ -150,7 +148,10 @@ export default function SettingsPage() {
     confirmAction("DELETE", id, "category");
   };
 
-  const openEditModal = (item: any, type: string) => {
+  const openEditModal = (
+    item: ProductType | Category,
+    type: "productType" | "category"
+  ) => {
     confirmAction("UPDATE", item.id, type);
   };
 
@@ -159,16 +160,16 @@ export default function SettingsPage() {
       if (currentAction === "DELETE") {
         if (itemType === "productType") {
           await deleteProductType({ variables: { id: itemId } });
-          setProductTypes((prev) => prev.filter((type) => type.id !== itemId));
+          setProductTypes((prev) => prev.filter((type: ProductType) => type.id !== itemId));
         } else if (itemType === "category") {
           await deleteCategory({ variables: { id: itemId } });
-          setCategories((prev) => prev.filter((cat) => cat.id !== itemId));
+          setCategories((prev) => prev.filter((cat: Category) => cat.id !== itemId));
         }
       } else if (currentAction === "UPDATE") {
         const itemToUpdate = itemType === "productType"
-          ? productTypes.find((type) => type.id === itemId)
-          : categories.find((cat) => cat.id === itemId);
-        triggerUpdateModal(itemToUpdate, itemType);
+          ? productTypes.find((type: ProductType) => type.id === itemId)
+          : categories.find((cat: Category) => cat.id === itemId);
+        triggerUpdateModal(itemToUpdate!, itemType); // Added non-null assertion
       }
     } catch (err) {
       console.error("Error during action:", err);
@@ -182,20 +183,20 @@ export default function SettingsPage() {
     if (activeTab === "Product Types & Pricing") {
       return (
         <ProductSettings
-          productTypes={productTypes}
+          items={productTypes}
           newType={newType}
           setNewType={setNewType}
           newRate={newRate}
           setNewRate={setNewRate}
           addProductType={addProductType}
           removeProductType={removeProductType}
-          openEditModal={openEditModal}
+          openEditModal={openEditModal as (item: { id: string; name: string; percentageRate: number }, type: "productType" | "category") => void}
         />
       );
     }
     return (
       <CategorySettings
-        categories={categories}
+        items={categories}
         newCategory={newCategory}
         setNewCategory={setNewCategory}
         newCategoryImage={newCategoryImage}
@@ -264,11 +265,15 @@ export default function SettingsPage() {
           onSubmitSuccess={() => {
             if (mutationType === "productType") {
               setProductTypes((prev) =>
-                prev.map((type) => (type.id === editingItem?.id ? editingItem : type))
+                prev.map((type: ProductType) => 
+                  type.id === editingItem?.id ? (editingItem as ProductType) : type
+                )
               );
             } else {
               setCategories((prev) =>
-                prev.map((cat) => (cat.id === editingItem?.id ? editingItem : cat))
+                prev.map((cat: Category) => 
+                  cat.id === editingItem?.id ? (editingItem as Category) : cat
+                )
               );
             }
           }}
@@ -279,11 +284,9 @@ export default function SettingsPage() {
       {confirmationOpen && currentAction && (
         <ConfirmationModal
           isOpen={confirmationOpen}
-          closeModal={() => setConfirmationOpen(false)}
-          onConfirm={handleConfirmedAction}
+          closeModalAction={() => setConfirmationOpen(false)}
+          onConfirmAction={handleConfirmedAction}
           actionType={currentAction}
-          itemId={itemId}
-          itemType={itemType}
         />
       )}
     </div>
@@ -299,11 +302,11 @@ interface SettingsProps<T> {
   setNewRate: (value: string) => void;
   addProductType: () => Promise<void>;
   removeProductType: (id: string) => void;
-  openEditModal: (item: T, type: string) => void;
+  openEditModal: (item: T, type: "productType" | "category") => void;
 }
 
 function ProductSettings({
-  productTypes,
+  items,
   newType,
   setNewType,
   newRate,
@@ -320,7 +323,7 @@ function ProductSettings({
           <Input
             type="text"
             placeholder="Enter type (e.g., Premium)"
-            value={newType}
+            defaultValue={newType}
             onChange={(e) => setNewType(e.target.value)}
           />
         </div>
@@ -329,7 +332,7 @@ function ProductSettings({
           <Input
             type="number"
             placeholder="Enter rate"
-            value={newRate}
+            defaultValue={newRate}
             onChange={(e) => setNewRate(e.target.value)}
           />
         </div>
@@ -340,7 +343,7 @@ function ProductSettings({
       <div className="mt-6">
         <h4 className="text-lg font-medium">Existing Product Types</h4>
         <ul className="mt-2">
-          {productTypes.map((type) => (
+          {items.map((type) => (
             <li
               key={type.id}
               className="flex justify-between bg-gray-100 px-4 py-2 rounded-lg mt-2 items-center"
@@ -370,7 +373,7 @@ function ProductSettings({
 
 // Subcomponent: CategorySettings
 interface CategorySettingsProps {
-  categories: { id: string; name: string; image: string; video: string }[];
+  items: { id: string; name: string; image: string; video: string }[];
   newCategory: string;
   setNewCategory: (value: string) => void;
   newCategoryImage: string;
@@ -379,11 +382,11 @@ interface CategorySettingsProps {
   setNewCategoryVideo: (value: string) => void;
   addCategory: () => Promise<void>;
   removeCategory: (id: string) => void;
-  openEditModal: (item: any, type: string) => void;
+  openEditModal: (item: { id: string; name: string; image: string; video: string }, type: "category") => void;
 }
 
 function CategorySettings({
-  categories,
+  items,
   newCategory,
   setNewCategory,
   newCategoryImage,
@@ -402,7 +405,7 @@ function CategorySettings({
           <Input
             type="text"
             placeholder="Enter category (e.g., Footwear)"
-            value={newCategory}
+            defaultValue={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
           />
         </div>
@@ -411,7 +414,7 @@ function CategorySettings({
           <Input
             type="text"
             placeholder="Enter image filename"
-            value={newCategoryImage}
+            defaultValue={newCategoryImage}
             onChange={(e) => setNewCategoryImage(e.target.value)}
           />
         </div>
@@ -420,7 +423,7 @@ function CategorySettings({
           <Input
             type="text"
             placeholder="Enter video filename"
-            value={newCategoryVideo}
+            defaultValue={newCategoryVideo}
             onChange={(e) => setNewCategoryVideo(e.target.value)}
           />
         </div>
@@ -431,7 +434,7 @@ function CategorySettings({
       <div className="mt-6">
         <h4 className="text-lg font-medium">Existing Categories</h4>
         <ul className="mt-2">
-          {categories.map((category) => (
+          {items.map((category) => (
             <li
               key={category.id}
               className="flex justify-between bg-gray-100 px-4 py-2 rounded-lg mt-2 items-center"
@@ -439,7 +442,7 @@ function CategorySettings({
               <div>
                 <span>{category.name}</span>
                 <div>
-                  {category.image && <img src={category.image} alt={category.name} className="w-10 h-10 rounded" />}
+                  {category.image && <Image src={category.image} alt={category.name} width={500} height={300} className="w-10 h-10 rounded" />}
                   {category.video && (
                     <a href={category.video} target="_blank" rel="noopener noreferrer">
                       View Video
@@ -449,7 +452,7 @@ function CategorySettings({
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => openEditModal(category, "category")}
+                  onClick={() => openEditModal(category as Category, "category")}
                   className="text-green-500 hover:text-green-700"
                 >
                   <Pencil size={18} />
