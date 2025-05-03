@@ -103,7 +103,6 @@ export default function SignInForm() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
                   disabled={otpSent}
                 />
               </div>
@@ -117,7 +116,6 @@ export default function SignInForm() {
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      required
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -141,7 +139,6 @@ export default function SignInForm() {
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    required
                   />
                 </div>
               )}
