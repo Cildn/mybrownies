@@ -149,6 +149,7 @@ export const orderResolvers = {
          },
         include: { orderItems: { include: { product: true, collection: true } } },
       });
+      return order;
     },
 
     markOrderAsCancelled: async (_, { orderId }, { admin }) => {
@@ -160,6 +161,7 @@ export const orderResolvers = {
          },
         include: { orderItems: { include: { product: true, collection: true } } },
       });
+      return order;
     },
 
     exportOrdersCSV: async (_, __, { admin }) => {
