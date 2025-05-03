@@ -142,8 +142,8 @@ async function startServer() {
   server.applyMiddleware({ app, path: "/graphql" });
 
   const PORT = process.env.PORT || 4000;
-  app.listen(PORT, () => {
-    console.log(`Server running at https://mybrownies.com.ng/graphql`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running at ${PORT}`);
   });
 
   server.timeout = 300000; // Set timeout to 5 minutes (300000 ms)
