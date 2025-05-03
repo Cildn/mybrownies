@@ -38,10 +38,10 @@ export function useSession() {
         let sessionData = null;
         const storedSession = localStorage.getItem('ecommerce_session');
 
-        if (validateSession(storedSession)) {
-          // Use existing valid session
+        if (storedSession && validateSession(storedSession)) {
           sessionData = JSON.parse(storedSession);
-        } else {
+        }
+         else {
           // Create new session
           const newSession = {
             id: generateSessionId(),
