@@ -98,7 +98,7 @@ export default function InvoiceTable() {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 {showCheckboxes && (
-                  <TableCell className="w-12" />
+                  <TableCell className="w-12" >&nbsp;</TableCell>
                 )}
                 <TableCell isHeader className="text-left pl-4">
                   Invoice ID

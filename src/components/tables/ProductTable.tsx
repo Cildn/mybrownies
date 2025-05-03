@@ -21,6 +21,12 @@ interface Product {
   id: string;
   displayId: string;
   name: string;
+  description: string;
+  additionalInfo: string;
+  brand: string;
+  discountRate: number;
+  typeId: string;
+  categoryId: string;
   category?: { name?: string };
   prices: number[]; // Updated from `price: string` to `prices: number[]`
   collections?: { name?: string }[];
@@ -29,6 +35,8 @@ interface Product {
   materials: string[];
   sizes: string[];
   colors: string[];
+  stock: number;
+  isFeatured: boolean;
 }
 
 export default function ProductTable() {
@@ -42,6 +50,28 @@ export default function ProductTable() {
   const { loading, error, data, refetch } = useQuery(GET_PRODUCTS);
   const [deleteProduct] = useMutation(DELETE_PRODUCT);
 
+  const defaultProduct: Product = {
+    id: "",
+    displayId: "",
+    name: "",
+    description: "",
+    additionalInfo: "",
+    brand: "",
+    discountRate: 0,
+    typeId: "",
+    categoryId: "",
+    category: { name: "" },
+    prices: [],
+    collections: [],
+    images: [],
+    videos: [],
+    materials: [],
+    sizes: [],
+    colors: [],
+    stock: 0,
+    isFeatured: false,
+  };
+  
   useEffect(() => {
     if (error) {
       console.error("Error fetching products:", error);
@@ -142,7 +172,7 @@ export default function ProductTable() {
           {/* Table Header */}
           <TableHeader className="border-b border-gray-200 dark:border-gray-800">
             <TableRow>
-              {showCheckboxes && <TableCell className="w-12"></TableCell>}
+              {showCheckboxes && <TableCell className="w-12">&nbsp;</TableCell>}
               <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start dark:text-gray-400"
@@ -260,7 +290,7 @@ export default function ProductTable() {
         {selectedProductId && (
           <ProductUpdateModal
             onClose={handleProductUpdated}
-            initialData={tableData.find((p) => p.id === selectedProductId)!}
+            initialData={tableData.find((p) => p.id === selectedProductId) || defaultProduct}
             onSubmitSuccess={handleProductUpdated}
           />
         )}

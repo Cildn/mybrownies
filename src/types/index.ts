@@ -10,15 +10,20 @@ export interface ProductType {
 export interface Product {
   id: string;
   name: string;
+  additionalInfo: string;
+  brand: string;
   description: string;
   images: string[];
   price: number;
-  prices: number[]; // Added to match the existing data structure
-  category: { name: string }; // Added
-  colors: string[]; // Added
-  sizes: string[]; // Added
-  isFeatured: boolean; // Added
+  prices: number[];
+  originalPrice?: number; // <-- Added
+  discount?: number; // <-- Added
+  category: { name: string };
+  colors: string[];
+  sizes: string[];
+  isFeatured: boolean;
 }
+
 
 export interface Collection {
   id: string;
@@ -26,10 +31,14 @@ export interface Collection {
   description: string;
   images: string[];
   price: number;
-  products: Product[]; // Added to match the existing data structure
+  originalPrice?: number; // Added
+  discount?: boolean; // Added
+  discountRate?: number; // Added
+  products: Product[];
   additionalInfo: string;
-  category: { name: string }; // Added
+  category: { name: string, id: string };
 }
+
 
 export interface Category {
   id: string;

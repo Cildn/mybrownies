@@ -1,8 +1,13 @@
 // components/product/ProductCard.js
 import Image from "next/image";
 import Link from "next/link";
+import { Product } from "@/types";
 
-const ProductCard = ({ product }) => {
+interface Props {
+  product: Product;
+}
+
+const ProductCard: React.FC<Props> = ({ product }) => {
   // Assuming the first color in the array is used for the button style
   const themeColor = product.colors ? product.colors[0] : "gray-900";
 

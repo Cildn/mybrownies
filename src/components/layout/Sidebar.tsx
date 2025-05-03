@@ -24,11 +24,11 @@ interface FiltersType {
 interface SidebarProps {
   type: "menu" | "search" | "cart" | "filter" | null;
   onClose: () => void;
-  products: ProductType[];
-  filters: FiltersType;
-  onFilterChange: (type: keyof FiltersType, value: string) => void;
-  onDone: () => void;
-  onClearAll: () => void;
+  products?: ProductType[];
+  filters?: FiltersType;
+  onFilterChange?: (type: keyof FiltersType, value: string) => void;
+  onDone?: () => void;
+  onClearAll?: () => void;
 }
 
 export default function Sidebar({
@@ -77,7 +77,7 @@ export default function Sidebar({
           {type === "menu" && <MenuSidebar />}
           {type === "search" && <SearchSidebar />}
           {type === "cart" && <CartSidebar />}
-          {type === "filter" && (
+          {type === "filter" && products && filters && onFilterChange && onDone && onClearAll && (
             <FilterSidebar
               products={products}
               filters={filters}

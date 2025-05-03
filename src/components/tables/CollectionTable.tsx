@@ -21,11 +21,17 @@ interface Collection {
   id: string;
   displayId: string;
   name: string;
+  description: string;  // Make it optional if needed
+  additionalInfo: string;  // Add other properties similarly
+  discountRate: number;  // Add other properties similarly
+  categoryId: string;
+  productIds: string[];
   category?: { name?: string };
   price: number;
   products?: { name?: string }[];
   images: string[];
   videos: string[];
+  status: string;
 }
 
 export default function CollectionTable() {
@@ -36,6 +42,23 @@ export default function CollectionTable() {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  const defaultCollection: Collection = {
+    id: "",
+    displayId: "",
+    name: "",
+    description: "",  // Add missing description
+    additionalInfo: "", // Add missing additionalInfo
+    discountRate: 0, // Add missing discountRate
+    categoryId: "", // Add missing categoryId
+    category: { name: "" },
+    price: 0,
+    products: [],
+    images: [],
+    videos: [],
+    status: "active",
+    productIds: [],
+  };  
 
   // Fetch collections data
   const { loading, error, data, refetch } = useQuery(GET_COLLECTIONS);
@@ -84,12 +107,6 @@ export default function CollectionTable() {
     setIsUpdateModalOpen(true);
   };
   const closeUpdateModal = () => setIsUpdateModalOpen(false);
-
-  // Handle collection creation
-  const handleCollectionCreated = () => {
-    closeCreateModal();
-    refetch(); // Refetch collections to update the table
-  };
 
   // Handle collection update
   const handleCollectionUpdated = () => {
@@ -167,7 +184,7 @@ export default function CollectionTable() {
           {/* Table Header */}
           <TableHeader className="border-b border-gray-200 dark:border-gray-800">
             <TableRow>
-              {showCheckboxes && <TableCell className="w-12"></TableCell>}
+              {showCheckboxes && <TableCell className="w-12">&nbsp;</TableCell>}
               <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start dark:text-gray-400"
@@ -274,7 +291,7 @@ export default function CollectionTable() {
         onClose={closeCreateModal}
         className="w-full h-full fixed top-0 left-0 bg-white dark:bg-gray-900 p-5 lg:p-10 overflow-auto"
       >
-        <CollectionFormModal onCreate={handleCollectionCreated} />
+        <CollectionFormModal />
       </Modal>
 
       {/* Confirmation Modal */}
@@ -294,7 +311,7 @@ export default function CollectionTable() {
         {selectedCollectionId && (
           <CollectionUpdateModal
             onClose={closeUpdateModal}
-            initialData={tableData.find((p) => p.id === selectedCollectionId) || {}}
+            initialData={tableData.find((p) => p.id === selectedCollectionId) || defaultCollection}
             onSubmitSuccess={handleCollectionUpdated}
           />
         )}

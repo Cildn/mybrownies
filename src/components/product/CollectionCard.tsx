@@ -1,7 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Collection } from "@/types";
 
-const CollectionCard = ({ collection }) => {
+interface Props {
+  collection: Collection;
+}
+
+const CollectionCard: React.FC<Props> = ({ collection }) => {
 
   return (
     <Link href={`/category/${collection.category.name}/collections/${collection.id}`} passHref>
