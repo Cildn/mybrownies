@@ -19,6 +19,7 @@ import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 import { OrderType, OrderItemType } from "@/types";
 
+
 export default function OrdersTable() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showCheckboxes, setShowCheckboxes] = useState(false);

@@ -120,7 +120,7 @@ const ProductPage = () => {
   };
 
   return (
-    <div className="bg-[#f8f6f2] text-[#333] min-h-screen mt-8">
+    <div className="bg-[#f8f6f2] text-[#333] min-h-screen mt-10">
       <Navbar isVisible />
 
       {/* Sidebar */}

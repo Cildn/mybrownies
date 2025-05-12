@@ -9,11 +9,12 @@
 
 @font-face {
   font-family: "Nelphim";
-  src: url("/fonts/Nelphim.woff2") format("otf"),
+  src: url("/fonts/Nelphim.woff2") format("woff2"),
        url("/fonts/Nelphim.woff") format("woff");
   font-weight: normal;
   font-style: normal;
 }
+
 
 @font-face {
   font-family: 'Hellix-Regular';

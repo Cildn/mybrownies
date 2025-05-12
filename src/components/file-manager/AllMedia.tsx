@@ -5,10 +5,13 @@ import MediaCard from "./MediaCard";
 import { Modal } from "@/components/ui/modal";
 import UploadFormModal from "@/components/modals/form/UploadForm";
 import { FileStats } from "@/types"; // Import the specific interface
+import { CREATE_QR_CODE } from "@/lib/graphql/mutations/campaign";
+import { useMutation } from "@apollo/client";
 
 const AllMediaSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fileStats, setFileStats] = useState<FileStats | null>(null);
+  const [createQRCode] = useMutation(CREATE_QR_CODE);
 
   // Fetch file stats from the backend
   useEffect(() => {
@@ -73,12 +76,42 @@ const AllMediaSection = () => {
     fetchFileStats();
   }, []);
 
+  const handleGenerateQR = async () => {
+    const count = window.prompt("Enter the number of QR codes to generate:");
+    if (count === null) return; // User cancelled the prompt
+
+    const countNumber = parseInt(count);
+    if (isNaN(countNumber) || countNumber <= 0) {
+      alert("Please enter a valid positive number.");
+      return;
+    }
+
+    try {
+      await createQRCode({
+        variables: {
+            count: countNumber
+        }
+      });
+
+      alert(`Generating ${countNumber} QR codes...`);
+    } catch (error) {
+      console.error("Error generating QR codes:", error);
+      alert("Failed to generate QR codes.");
+    }
+  };
+
   return (
     <section className="bg-white p-6 rounded-lg">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">All Media</h2>
         <div className="flex items-center space-x-2">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            onClick={handleGenerateQR}
+          >
+            Generate QR
+          </button>
           <input
             type="text"
             placeholder="Search..."

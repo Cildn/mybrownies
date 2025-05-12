@@ -1,12 +1,16 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+'use client';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_CART_ITEMS } from '@/lib/graphql/queries/cart';
-import { REMOVE_FROM_CART, CLEAR_CART, CHECKOUT } from '@/lib/graphql/mutations/cart';
-import { X, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
+import { REMOVE_FROM_CART, CLEAR_CART } from '@/lib/graphql/mutations/cart';
+import { CREATE_USER, SEND_AGENT_EMAIL, ATTEMPT_BADGE_UPGRADE, VALIDATE_USER_BY_EMAIL } from '@/lib/graphql/mutations/campaign';
+import { useSession } from '@/lib/hooks/useSession';
+import { ShoppingBag, X, ArrowRight, Trash2 } from 'lucide-react';
 import Button from '../ui/button/Button';
 import Image from 'next/image';
-import { useSession } from '@/lib/hooks/useSession';
+import { useRouter } from 'next/navigation';
+import { Modal } from '../ui/modal';
+import { useLazyQuery } from '@apollo/client';
 
 interface CartItem {
   id: string;
@@ -23,75 +27,209 @@ interface CartItem {
   selectedSizeIndex: number;
 }
 
+const BROWNIE_PRODUCT_IDS: string[] = ['1e9bba4e-c404-49b0-a9f8-544d813ec52a'];
+
 export default function CartSidebar() {
+  const [couponCode, setCouponCode] = useState<string>('');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [couponAid, setCouponAid] = useState<string>(''); // Added state for couponAid
   const { sessionId, isLoading: sessionLoading } = useSession();
   const [ready, setReady] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [buyerName, setBuyerName] = useState('');
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const router = useRouter();
 
-  // Auto-dismiss alert after 2 seconds
+  const [attemptBadgeUpgrade, { loading: upgrading }] = useMutation(ATTEMPT_BADGE_UPGRADE);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   useEffect(() => {
     if (cartError) {
-      const timer = setTimeout(() => {
-        setCartError(null);
-      }, 2000);
+      const timer = setTimeout(() => setCartError(null), 2000);
       return () => clearTimeout(timer);
     }
   }, [cartError]);
 
-  // Wait until session is loaded before making queries
   useEffect(() => {
-    if (!sessionLoading) {
-      setReady(true);
-    }
+    if (!sessionLoading) setReady(true);
   }, [sessionLoading]);
+
+  // Extract first four characters of coupon code
+  useEffect(() => {
+    if (couponCode.length >= 4) {
+      setCouponAid(couponCode.substring(0, 4));
+    } else {
+      setCouponAid('');
+    }
+  }, [couponCode]);
 
   const { data, loading, error, refetch } = useQuery(GET_CART_ITEMS, {
     variables: { sessionId },
     skip: !ready || !sessionId,
   });
-
+  const [validateUserByEmail] = useLazyQuery(
+    VALIDATE_USER_BY_EMAIL,
+    {
+      fetchPolicy: 'network-only'
+    }
+  );
   const [removeFromCart] = useMutation(REMOVE_FROM_CART);
   const [clearCart] = useMutation(CLEAR_CART);
-  const [checkout] = useMutation(CHECKOUT);
+  const [createUserMutation] = useMutation(CREATE_USER);
+  const [sendAgentEmailMutation] = useMutation(SEND_AGENT_EMAIL);
+
+  const cartItems: CartItem[] = data?.cartItems || [];
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.product.prices[item.selectedSizeIndex] * item.quantity,
+    0
+  );
+
+  const hasBrownies = cartItems.some(item => BROWNIE_PRODUCT_IDS.includes(item.product.id));
 
   const handleRemoveItem = async (itemId: string) => {
     try {
       await removeFromCart({ variables: { sessionId, itemId } });
-      await refetch(); // Refresh the cart items after removal
-      setCartError(null);
+      await refetch();
     } catch (err) {
+      console.error(err);
       setCartError('Failed to remove item. Please try again.');
-      console.error('Error removing item:', err);
     }
   };
 
   const handleClearCart = async () => {
     try {
       await clearCart({ variables: { sessionId } });
-      await refetch(); // Refresh the cart items after clearing
-      setCartError(null);
+      await refetch();
     } catch (err) {
-      setCartError('Failed to clear cart. Please try again.');
-      console.error('Error clearing cart:', err);
+      console.error(err);
+      setCartError('Failed to clear cart.');
     }
   };
 
   const handleCheckout = async () => {
+    if (!showCheckout) {
+      setShowCheckout(true);
+      return;
+    }
+
+    if (!buyerName || !buyerEmail) {
+      setCartError('Please enter your full name and email.');
+      return;
+    }
+
+    const email = buyerEmail;
+
     try {
-      const totalAmount = cartItems.reduce(
-        (sum: number, item: CartItem) => sum + (item.product.prices[item.selectedSizeIndex] * item.quantity),
-        0
-      );
+      const handler = window.PaystackPop.setup({
+        key: 'pk_test_8607d9e03822eff8e10c7dc17ba56ab3ef7d79a8',
+        email,
+        amount: subtotal * 100,
+        currency: 'NGN',
+        metadata: {
+          custom_fields: [
+            {
+              display_name: 'Session ID',
+              variable_name: 'session_id',
+              value: sessionId as string,
+            },
+            {
+              display_name: 'Full Name',
+              variable_name: 'full_name',
+              value: buyerName || 'Anonymous',
+            }
+          ],
+        },
+        callback: function (response: { reference: string }) {
+          fetch(`http://localhost:4000/api/paystack/verify/${response.reference}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          })
+            .then(res => res.json())
+            .then(async result => {
+              if (!result.success) throw new Error('Payment verification failed');
 
-      const { data: checkoutData } = await checkout({ variables: { sessionId, total: totalAmount } });
-      console.log('Checkout successful:', checkoutData);
-      setCartError(null);
+              await clearCart({ variables: { sessionId } });
+              await refetch();
 
-      // Optional: Navigate to a success page or show a success message
-      // router.push('/checkout/success');
+              alert('Payment successful!');
+
+              if (hasBrownies) {
+                try {
+                  const { data } = await validateUserByEmail({
+                    variables: {
+                      email: buyerEmail,
+                    },
+                  });
+            
+                  if (!data?.validateUserById) {
+                    // User doesn't exist, create new user and send email
+                    const { data: userData } = await createUserMutation({
+                      variables: { input: { fullName: buyerName, email: buyerEmail } }
+                    });
+                    const newAgentId = userData.createUser.agentId;
+
+                    await sendAgentEmailMutation({
+                      variables: {
+                        input: {
+                          agentId: newAgentId,
+                          fullName: buyerName,
+                          email: buyerEmail,
+                        }
+                      }
+                    });
+
+                    // Attempt badge upgrade after creating user
+                    try {
+                      const { data } = await attemptBadgeUpgrade({
+                        variables: {
+                          input: {
+                            agentId: newAgentId,
+                            couponCode: couponCode || '',
+                          }
+                        }
+                      });
+                      const { success, newBadge, attempt } = data.attemptBadgeUpgrade;
+                      alert(
+                        success
+                          ? `Congrats! You’ve been upgraded to ${newBadge}.`
+                          : `Upgrade failed (chance was ${attempt.chance}%). Try again!`
+                      );
+                      setShowUpgradeModal(false);
+                      router.push('/brownie-city/');
+                    } catch (err) {
+                      console.error(err);
+                      setShowUpgradeModal(true);
+                    }
+                  } else {
+                    // User already exists, just proceed to badge
+                   setShowUpgradeModal(true);
+                  }
+                } catch (err) {
+                  console.error(err);
+                  setCartError('User validation error. Please contact support.');
+                }
+              }
+
+            })
+            .catch(err => {
+              console.error(err);
+              setCartError('Post-payment error. Please contact support.');
+            });
+        },
+        onClose: () => console.log('Payment closed'),
+      });
+
+      handler.openIframe();
     } catch (err) {
-      setCartError('Checkout failed. Please try again.');
-      console.error('Error during checkout:', err);
+      console.error(err);
+      setCartError('Could not initiate payment.');
     }
   };
 
@@ -121,14 +259,8 @@ export default function CartSidebar() {
     );
   }
 
-  const cartItems = data?.cartItems || [];
-  const subtotal = cartItems.reduce(
-    (sum: number, item: CartItem) => sum + (item.product.prices[item.selectedSizeIndex] * item.quantity),
-    0
-  );
-
   return (
-    <div className="flex flex-col h-full">
+    <div className="relative flex flex-col h-full">
       {/* Header */}
       <div className="border-b border-gray-100 pb-4">
         <h2 className="text-xl font-light flex items-center">
@@ -136,7 +268,7 @@ export default function CartSidebar() {
           Your Bag
           <span className="ml-auto text-sm font-normal">
             {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
-          </span>
+ </         span>
         </h2>
       </div>
 
@@ -168,7 +300,7 @@ export default function CartSidebar() {
             <p className="mt-2">Your bag is empty</p>
           </div>
         ) : (
-          cartItems.map((item: CartItem) => (
+          cartItems.map(item => (
             <div key={item.id} className="flex border-b border-gray-100 pb-4">
               <div className="relative h-24 w-20 flex-shrink-0">
                 <Image
@@ -179,26 +311,15 @@ export default function CartSidebar() {
                   sizes="80px"
                 />
               </div>
-              
               <div className="ml-4 flex-1">
                 <div className="flex justify-between">
                   <h3 className="text-sm font-medium">{item.product.name}</h3>
-                  <button 
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="text-gray-400 hover:text-black"
-                    aria-label="Remove item"
-                  >
+                  <button onClick={() => handleRemoveItem(item.id)} className="text-gray-400 hover:text-black" aria-label="Remove item">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-                
-                <p className="mt-1 text-sm text-gray-500">
-                  Size: {item.product.sizes[item.selectedSizeIndex]}
-                </p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Qty: {item.quantity}
-                </p>
-                
+                <p className="mt-1 text-sm text-gray-500">Size: {item.product.sizes[item.selectedSizeIndex]}</p>
+                <p className="mt-1 text-sm text-gray-500">Qty: {item.quantity}</p>
                 <p className="mt-2 text-sm font-medium">
                   ${(item.product.prices[item.selectedSizeIndex] * item.quantity).toFixed(2)}
                 </p>
@@ -215,26 +336,79 @@ export default function CartSidebar() {
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          
-          <div className="space-y-2">
-            <Button
-              onClick={handleCheckout}
-              className="w-full flex items-center justify-between bg-black text-white hover:bg-gray-800"
-              disabled={loading}
-            >
-              Checkout
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-            
-            <button
-              onClick={handleClearCart}
-              className="w-full flex items-center justify-center text-sm text-gray-500 hover:text-black"
-              disabled={loading}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear Bag
-            </button>
-          </div>
+          {cartItems.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Coupon (optional)</label>
+              <input
+                type="text"
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value.trim())}
+                placeholder="Enter your coupon code"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          )}
+          {showCheckout && (
+            <div className="space-y-2 pb-4">
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={buyerName}
+                onChange={e => setBuyerName(e.target.value               )}
+ className="w-full p-2 border rounded"
+              />
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={buyerEmail}
+                onChange={e => setBuyerEmail(e.target.value)}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          )}
+          <Button onClick={handleCheckout} className="w-full flex items-center justify-between bg-black text-white hover:bg-gray-800" disabled={loading}>
+            {showCheckout ? 'Pay Now' : 'Proceed to Checkout'}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          {showUpgradeModal && couponAid && (
+            <Modal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)}>
+              <h2 className="text-xl font-semibold mb-4">Badge Upgrade</h2>
+              <p className="mb-4">
+                You have <strong>{couponCode || 'no coupon'}</strong> ready to mint your next badge.
+              </p>
+              <button
+                onClick={async () => {
+                  try {
+                    const { data } = await attemptBadgeUpgrade({
+                      variables: {
+                        input: {
+                          agentId: couponAid,
+                          couponCode: couponCode || '',
+                        }
+                      }
+                    });
+                    const { success, newBadge, attempt } = data.attemptBadgeUpgrade;
+                    alert(
+                      success
+                        ? `Congrats! You’ve been upgraded to ${newBadge}.`
+                        : `Upgrade failed (chance was ${attempt.chance}%). Try again!`
+                    );
+                    setShowUpgradeModal(false);
+                  } catch (err) {
+                    alert(err || 'Upgrade error');
+                  }
+                }}
+                disabled={upgrading}
+              >
+                {upgrading ? 'Minting…' : 'Mint Badge'}
+              </button>
+            </Modal>
+          )}
+
+          <button onClick={handleClearCart} className="w-full flex items-center justify-center text-sm text-gray-500 hover:text-black mt-2" disabled={loading}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Clear Bag
+          </button>
         </div>
       )}
     </div>

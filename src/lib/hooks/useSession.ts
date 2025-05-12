@@ -22,10 +22,18 @@ export function useSession() {
     try {
       const sessionData = JSON.parse(storedSession);
       if (!sessionData.id || !sessionData.createdAt) return false;
-      
+
       // Check if session is expired
       const sessionAge = Date.now() - new Date(sessionData.createdAt).getTime();
-      return sessionAge < SESSION_EXPIRATION_MS;
+      const isSessionExpired = sessionAge >= SESSION_EXPIRATION_MS;
+      
+      if (isSessionExpired) {
+        // Clean up expired session
+        localStorage.removeItem('ecommerce_session');
+        return false;
+      }
+      
+      return !isSessionExpired;
     } catch {
       return false;
     }
@@ -40,9 +48,8 @@ export function useSession() {
 
         if (storedSession && validateSession(storedSession)) {
           sessionData = JSON.parse(storedSession);
-        }
-         else {
-          // Create new session
+        } else {
+          // Create new session if no valid session exists
           const newSession = {
             id: generateSessionId(),
             createdAt: new Date().toISOString()
@@ -63,7 +70,7 @@ export function useSession() {
     initializeSession();
   }, []);
 
-  // Optional: Session refresh logic
+  // Optional: Refresh session logic
   const refreshSession = () => {
     const newSession = {
       id: generateSessionId(),

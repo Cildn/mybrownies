@@ -1,10 +1,11 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { Switch } from "@headlessui/react";
-import { Settings, Save, RotateCw } from "lucide-react";
-import { useQuery, useMutation } from "@apollo/client";
-import { GET_SITE_CONFIG } from "@/lib/graphql/queries/siteConfig";
-import { UPDATE_SITE_CONFIG } from "@/lib/graphql/mutations/siteConfig";
+'use client';
+import React, { useState, useEffect } from 'react';
+import { Switch } from '@headlessui/react';
+import { Settings, Save, RotateCw } from 'lucide-react';
+import { useQuery, useMutation } from '@apollo/client';
+import { GET_SITE_CONFIG } from '@/lib/graphql/queries/siteConfig';
+import { CREATE_CLUE } from '@/lib/graphql/mutations/campaign';
+import { UPDATE_SITE_CONFIG } from '@/lib/graphql/mutations/siteConfig';
 
 interface SiteConfig {
   id: string;
@@ -18,14 +19,20 @@ interface QueryResponse {
   siteConfig: SiteConfig;
 }
 
+
 const WebConfigPage = () => {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [liveMode, setLiveMode] = useState(true);
-  const [heroVideo, setHeroVideo] = useState("");
+  const [heroVideo, setHeroVideo] = useState('');
   const [monthlyTarget, setMonthlyTarget] = useState(0);
+  const [clueQuestion, setClueQuestion] = useState('');
+  const [clueAnswer, setClueAnswer] = useState('');
+  const [clueDate, setClueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [clueError, setClueError] = useState<string | null>(null);
 
   const { data, loading, error } = useQuery<QueryResponse>(GET_SITE_CONFIG);
   const [updateSiteConfig] = useMutation(UPDATE_SITE_CONFIG);
+  const [createClue] = useMutation(CREATE_CLUE);
 
   useEffect(() => {
     if (data) {
@@ -47,19 +54,47 @@ const WebConfigPage = () => {
         },
         context: {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`, // assuming you store the token in localStorage
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
         },
       });
-      alert("Settings saved successfully!");
+      alert('Settings saved successfully!');
     } catch (err) {
-      console.error("Error saving settings:", err);
-      alert("Failed to save settings. Please try again.");
+      console.error('Error saving settings:', err);
+      alert('Failed to save settings. Please try again.');
     }
   };
-  
 
-  // Reset to initial settings
+  const setClueOfTheDay = async () => {
+    if (!clueQuestion.trim() || !clueAnswer.trim()) {
+      setClueError('Please enter both question and answer');
+      return;
+    }
+
+    try {
+      await createClue({
+        variables: {
+          input: {
+            question: clueQuestion,
+            answer: clueAnswer,
+            date: clueDate,
+          },
+        },
+        context: {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        },
+      });
+
+      setClueError(null);
+      alert('Clue of the day updated successfully!');
+    } catch (err) {
+      console.error('Error updating clue of the day:', err);
+      setClueError('Failed to update clue of the day. Please try again.');
+    }
+  };
+
   const resetSettings = () => {
     if (data) {
       setMaintenanceMode(data.siteConfig.maintenanceMode);
@@ -89,13 +124,13 @@ const WebConfigPage = () => {
               checked={maintenanceMode}
               onChange={setMaintenanceMode}
               className={`${
-                maintenanceMode ? "bg-red-500" : "bg-gray-300"
+                maintenanceMode ? 'bg-red-500' : 'bg-gray-300'
               } relative inline-flex items-center h-6 rounded-full w-12 transition`}
             >
               <span className="sr-only">Enable Maintenance Mode</span>
               <span
                 className={`${
-                  maintenanceMode ? "translate-x-6" : "translate-x-1"
+                  maintenanceMode ? 'translate-x-6' : 'translate-x-1'
                 } inline-block w-4 h-4 transform bg-white rounded-full transition`}
               />
             </Switch>
@@ -107,13 +142,13 @@ const WebConfigPage = () => {
               checked={liveMode}
               onChange={setLiveMode}
               className={`${
-                liveMode ? "bg-green-500" : "bg-gray-300"
+                liveMode ? 'bg-green-500' : 'bg-gray-300'
               } relative inline-flex items-center h-6 rounded-full w-12 transition`}
             >
               <span className="sr-only">Enable Live Mode</span>
               <span
                 className={`${
-                  liveMode ? "translate-x-6" : "translate-x-1"
+                  liveMode ? 'translate-x-6' : 'translate-x-1'
                 } inline-block w-4 h-4 transform bg-white rounded-full transition`}
               />
             </Switch>
@@ -146,6 +181,49 @@ const WebConfigPage = () => {
             onChange={(e) => setMonthlyTarget(parseFloat(e.target.value))}
             className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700"
           />
+        </div>
+      </div>
+
+      {/* Clue of the Day Section */}
+      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg mb-6">
+        <h3 className="text-lg font-semibold mb-3">Clue of the Day</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between mb-4">
+            <span>Question:</span>
+            <input
+              type="text"
+              value={clueQuestion}
+              onChange={(e) => setClueQuestion(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 w-full"
+            />
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <span>Answer:</span>
+            <input
+              type="text"
+              value={clueAnswer}
+              onChange={(e) => setClueAnswer(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 w-full"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Date:</span>
+            <input
+              type="date"
+              value={clueDate}
+              onChange={(e) => setClueDate(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700"
+            />
+          </div>
+          {clueError && (
+            <p className="mt-2 text-red-600">{clueError}</p>
+          )}
+          <button
+            onClick={setClueOfTheDay}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Set Clue of the Day
+          </button>
         </div>
       </div>
 

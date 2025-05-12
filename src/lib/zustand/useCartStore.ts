@@ -12,10 +12,13 @@ type CartItem = {
 interface CartState {
   items: CartItem[];
   isCartOpen: boolean;
+  redirect: boolean;
   toggleCart: () => void;
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  setRedirect: () => void;
+  resetRedirect: () => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -23,7 +26,10 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isCartOpen: false,
+      redirect: false,
+
       toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),
+
       addItem: (item) => {
         const existingItem = get().items.find((i) => i.id === item.id);
         if (existingItem) {
@@ -36,9 +42,14 @@ export const useCartStore = create<CartState>()(
           set({ items: [...get().items, item] });
         }
       },
+
       removeItem: (id) =>
         set({ items: get().items.filter((item) => item.id !== id) }),
+
       clearCart: () => set({ items: [] }),
+
+      setRedirect: () => set({ redirect: true }),
+      resetRedirect: () => set({ redirect: false }),
     }),
     { name: "cart-storage" }
   )

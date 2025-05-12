@@ -5,6 +5,7 @@ import ApolloClientProvider from "@/provider/ApolloProvider";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/provider/AuthProvider";
 import RedirectHandler from "@/lib/zustand/redirectHandle";
+import CartRedirectHandler from "@/lib/zustand/cartRedirect";
 
 export const metadata: Metadata = {
   title: "Brownie's | A Symphony of the Senses",
@@ -20,6 +21,7 @@ export default function RootLayout({
         <ApolloClientProvider>
           <ThemeProvider>
             <SidebarProvider>
+              <CartRedirectHandler/>
               <AuthProvider>
                 {/* Place RedirectHandler here */}
                 <RedirectHandler />

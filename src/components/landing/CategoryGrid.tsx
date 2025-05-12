@@ -8,8 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const categories = [
   { name: "Scents",      description: "Immerse yourself in luxurious fragrances...",          image: "/images/scents-4k.jpg" },
   { name: "Aesthetics",  description: "Our fashion pieces complement your unique style...",   image: "/images/aesthetics-4k.jpg" },
-  { name: "Taste",       description: "Velvety brownies, curated desserts, and exquisite treats...", image: "/images/tastes-4k.jpg" },
-  { name: "Sight",       description: "Turn heads with our premium accessories...",           image: "/images/sight-4k.jpg" },
+  { name: "Tastes",       description: "Velvety brownies, curated desserts, and exquisite treats...", image: "/images/tastes-4k.jpg" },
+  { name: "Sights",       description: "Turn heads with our premium accessories...",           image: "/images/sight-4k.jpg" },
 ];
 
 export default function CategoryGrid() {
