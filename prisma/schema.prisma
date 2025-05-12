@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ProductType {
+  id              String    @id @default(uuid())
+  name            String
+  percentageRate  Float
+  products        Product[]
+}
+
+model Product {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., PROD-SCENTS-001)
+  name            String
+  description     String
+  additionalInfo  String?
+  typeId          String?
+  type            ProductType? @relation(fields: [typeId], references: [id])
+  discountRate    Int          @default(0)
+  brand           String?
+  stock           Int
+  category        Category     @relation(fields: [categoryId], references: [id])
+  categoryId      String
+  collections     Collection[] @relation("ProductCollections")
+  images          String[]
+  videos          String[]
+  materials       String[]
+  sizes           String[]     // List of sizes (e.g., ["S", "M", "L"])
+  prices          Float[]      // List of prices corresponding to sizes (e.g., [19.99, 24.99, 29.99])
+  colors          String[]
+  isFeatured      Boolean      @default(false)
+  orderItems      OrderItem[]  @relation("ProductOrderItems")
+  cartItems       CartItem[]   @relation("ProductCartItems")
+  updatedAt       DateTime     @default(now())
+  searchText      String       @default("")
+}
+
+model Collection {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., COLL-SCENTS-001)
+  name            String
+  description     String?
+  additionalInfo  String?
+  discountRate    Int?
+  images          String[]
+  videos          String[]
+  price           Float
+  category        Category?    @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  status          String       @default("complete")
+  products        Product[]    @relation("ProductCollections")
+  productVariants String[]     
+  orderItems      OrderItem[]  @relation("CollectionOrderItems")
+  cartItems       CartItem[]   @relation("CollectionCartItems")
+  updatedAt       DateTime     @updatedAt @default(now())
+  searchText      String       @default("")
+}
+
+
+model Category {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., CAT-001)
+  name            String
+  productCounter  Int          @default(0) // Counter for products
+  collectionCounter Int        @default(0) // Counter for collections
+  image           String
+  video           String?
+  products        Product[]
+  collections     Collection[]
+}
+
+model CartItem {
+  id              String       @id @default(uuid())
+  sessionId       String
+  productId       String?
+  product         Product?     @relation("ProductCartItems", fields: [productId], references: [id])
+  collectionId    String?
+  collection      Collection?  @relation("CollectionCartItems", fields: [collectionId], references: [id])
+  quantity        Int
+  selectedColorIndex Int
+  selectedSizeIndex Int
+}
+
+model Order {
+  id              String       @id @default(uuid())
+  displayId       String       // Human-readable ID (e.g., ORD-001)
+  total           Float
+  status          String       @default("Pending") // Can be Pending, Completed, Refunded
+  createdAt       DateTime     @default(now())
+  completedAt     DateTime?
+  updatedAt       DateTime?
+  orderItems      OrderItem[]
+}
+
+model OrderItem {
+  id              String       @id @default(uuid())
+  order           Order        @relation(fields: [orderId], references: [id])
+  orderId         String
+  product         Product?     @relation("ProductOrderItems", fields: [productId], references: [id])
+  productId       String?
+  collection      Collection?  @relation("CollectionOrderItems", fields: [collectionId], references: [id])
+  collectionId    String?
+  quantity        Int
+  price           Float
+  productVariants String
+}
+
+model Admin {
+  id              String       @id @default(uuid())
+  email           String       @unique
+  password        String
+  role            String       @default("ADMIN") // Future role management
+  otp             String?      // OTP field
+  otpExpiry       DateTime?
+  otpRequestCount Int          @default(0)
+}
+
+model SiteConfig {
+  id              String       @id @default("site-settings")
+  maintenanceMode Boolean      @default(false)
+  liveMode        Boolean      @default(true)
+  heroVideo       String?      @default("hero.mp4")
+  monthlyTarget   Float        @default(100000)
+  serviceFee      Float        @default(100)
+  categoryCounter Int          @default(0)
+  orderCounter    Int          @default(0)
+}
+
+model Media {
+  id              String       @id @default(uuid())
+  name            String
+  url             String
+  type            String       // MIME type (e.g., "image/jpeg", "video/mp4")
+  size            Int          // File size in bytes
+  folder          String
+  uploadedAt      DateTime     @default(now())
+  mimeType        String       // Explicitly store the MIME type for clarity
+  dimensions      String?      // Optional: For images (e.g., "1920x1080")
+  duration        Int?         // Optional: For videos (in seconds)
+  tags            String[]     // Optional: Tags for categorization or filtering
+}
+
+// Prisma Schema for Brownie City Campaign
+
+// Enum for different Badge Types (default is 'Brown')
+enum BadgeType {
+  BROWN
+  BLUE
+  GREEN
+  YELLOW
+  RED
+  NEON
+}
+
+// Model for storing physical QR codes (used for one-time participation)
+model QRCode {
+  id        String   @id @default(cuid()) // Unique ID for QR Code
+  code      String   @unique              // QR Code string
+  used      Boolean  @default(false)      // Flag to indicate if the QR Code has been used
+  usedBy    String?  // Agent ID of the user who scanned the code
+  usedAt    DateTime? // Timestamp for when the code was used
+  createdAt DateTime @default(now())      // When the QR Code was created
+}
+
+// Model for Campaign Users (no real user accounts, just Agent IDs and Emails)
+model CampaignUser {
+  id        String   @id @default(cuid()) // Unique ID for the user
+  agentId   String   @unique              // Agent ID (the user's identifier)
+  email     String                       // Email of the user
+  fullName  String                       // Full Name of the user
+  stage     Int      @default(1)         // Current stage of the user in the campaign
+  points    Int      @default(0)         // Total points accumulated by the user
+  badge     BadgeType @default(BROWN)    // Badge type for the user
+  createdAt DateTime @default(now())     // Timestamp for user creation
+  updatedAt DateTime @updatedAt          // Timestamp for user updates
+
+  // Relating the user to the clues they have answered (one-to-many relationship)
+  clues     Clue[]
+
+  // Relating CampaignUser to Coupons (one-to-many relationship)
+  coupons   Coupon[]
+
+  // Relating CampaignUser to BadgeUpgrades (one-to-many relationship)
+  badgeUpgrades BadgeUpgrade[]
+  MintAttempts  MintAttempt[]
+}
+
+// Model for Clues (Clue of the Day, which users answer to earn rewards)
+model Clue {
+  id        String   @id @default(cuid()) // Unique ID for the clue
+  date      DateTime @default(now())      // Date when the clue is available
+  question  String   // Clue question
+  answer    String   // Correct answer to the clue
+  createdAt DateTime @default(now())      // Timestamp for clue creation
+  updatedAt DateTime @updatedAt          // Timestamp for clue update
+
+  // Relating clues to the users who have answered them
+  userAnswers CampaignUser[]
+}
+
+// Model for Coupons (linked to Clue answers, used for discounts)
+model Coupon {
+  id        String   @id @default(cuid()) // Unique ID for the coupon
+  code      String   @unique              // The actual code (same as Agent ID)
+  discount  Float    @default(10)          // Discount value (can be adjusted per level)
+  expiry    DateTime                       // Expiry date for the coupon
+  createdAt DateTime @default(now())      // Timestamp for coupon creation
+  usageCount Int     @default(0)
+  maxUses    Int     @default(2)
+
+  // Relating coupons to the users who received them
+  user CampaignUser? @relation(fields: [agentId], references: [id])
+  agentId   String
+}
+
+// Model for BadgeUpgrades (records of badge upgrades)
+model BadgeUpgrade {
+  id        String     @id @default(cuid()) // Unique ID for badge upgrade record
+  agentId   String     // The Agent ID of the user
+  badgeType BadgeType  // The upgraded badge type (e.g., BRONZE, SILVER)
+  createdAt DateTime   @default(now()) // Timestamp for when the badge was upgraded
+
+  // Relating BadgeUpgrade to the CampaignUser
+  user CampaignUser @relation(fields: [agentId], references: [agentId])
+}
+
+model MintAttempt {
+  id        String      @id @default(cuid())
+  agentId   String
+  badgeFrom BadgeType
+  badgeTo   BadgeType
+  chance    Float
+  success   Boolean
+  createdAt DateTime    @default(now())
+
+  user CampaignUser @relation(fields: [agentId], references: [agentId])
+}

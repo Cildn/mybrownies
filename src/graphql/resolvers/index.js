@@ -6,6 +6,7 @@ import { orderResolvers } from './order.resolver.js';
 import { adminResolvers } from './admin.resolver.js';
 import {analyticsResolvers} from './analytics.resolver.js';
 import { searchResolvers } from './searchResolver.js';
+import { campaignResolvers } from './campaign.resolver.js';
 
 export default {
   Query: {
@@ -17,6 +18,7 @@ export default {
     ...adminResolvers.Query,
     ...analyticsResolvers.Query,
     ...searchResolvers.Query,
+    ...campaignResolvers.Query,
   },
   Mutation: {
     ...productResolvers.Mutation,
@@ -26,5 +28,6 @@ export default {
     ...orderResolvers.Mutation,
     ...adminResolvers.Mutation,
     ...analyticsResolvers.Mutation,
+    ...campaignResolvers.Mutation,
   },
 };

@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "SiteConfig" ADD COLUMN     "serviceFee" DOUBLE PRECISION NOT NULL DEFAULT 0.0;

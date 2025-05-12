@@ -16,6 +16,7 @@ import downloadRouter from "./routes/download.js";
 import { saveFile, sanitizeFolderPath } from "./utils/fileHandler.js";
 import filesRouter from "./routes/files.js";
 import foldersRouter from "./routes/folders.js";
+import paystackRouter from "./routes/paystack.js";
 
 dotenv.config();
 
@@ -114,6 +115,7 @@ app.post("/api/upload", upload.single("file"), async (req, res, next) => {
 app.use("/api", filesRouter);
 app.use("/api", foldersRouter);
 app.use("/download", downloadRouter);
+app.use("/api", paystackRouter);
 
 // 🔹 7. APOLLO GRAPHQL SERVER
 async function startServer() {

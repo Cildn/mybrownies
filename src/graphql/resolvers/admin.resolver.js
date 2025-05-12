@@ -7,6 +7,8 @@ import {
   verifyHashedOTP,
   sendOTP,
 } from "../../utils/auth.js";
+import { generateQRCodes } from "../../utils/qrUtil.js";
+import { hashAnswer } from '../../utils/answerHandler.js';
 
 const prisma = new PrismaClient();
 const MAX_OTP_REQUESTS = 3; // Adjustable limit
@@ -64,6 +66,32 @@ export const adminResolvers = {
   },
 
   Mutation: {
+
+    createClue: async (_, { input }) => {
+      try {
+        const { question, answer, date } = input;
+        const hashedAnswer = await hashAnswer(answer);
+        const clueDate = date ? new Date(date) : new Date();
+
+        const createdClue = await prisma.clue.create({
+          data: {
+            question,
+            answer: hashedAnswer,
+            date: clueDate,
+          },
+        });
+
+        return {
+          id: createdClue.id,
+          date: createdClue.date.toISOString(),
+          question: createdClue.question,
+        };
+      } catch (error) {
+        console.error('Error creating clue:', error);
+        throw new Error('Failed to create clue');
+      }
+    },
+
     requestAdminOTP: async (_, { email, password }) => {
       const admin = await prisma.admin.findUnique({ where: { email } });
       if (!admin) throw new Error("Admin not found");
@@ -119,6 +147,20 @@ export const adminResolvers = {
         longLivedToken: rememberMe ? longLivedToken : null,
         admin,
       };
+    },
+
+    createQRCodes: async (_, { count }, { admin }) => {
+      if (typeof count !== 'number' || count <= 0) {
+        throw new Error('Invalid count. Please provide a positive integer.');
+      }
+
+      try {
+        const qrCodes = await generateQRCodes(count);
+        return qrCodes;
+      } catch (error) {
+        console.error('Error generating QR codes:', error);
+        throw new Error('Failed to generate QR codes');
+      }
     },
 
     updateSiteConfig: async (_, { maintenanceMode, liveMode, heroVideo, monthlyTarget, serviceFee }, { admin }) => {

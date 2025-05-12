@@ -1,6 +1,19 @@
 import { gql } from "graphql-tag";
 
 export const adminSchema = gql`
+
+  input CreateClueInput {
+    question: String!
+    answer: String!  # Plaintext answer provided by admin
+    date: String     # Optional ISO date string
+  }
+
+  type Clue {
+  id: ID!
+  date: String!
+  question: String!
+  }
+
   type SiteConfig {
     id: ID!
     maintenanceMode: Boolean!
@@ -18,6 +31,16 @@ export const adminSchema = gql`
   todaySales: Int
   numberOfSales: Int
 }
+
+type QRCode {
+  id: ID!
+  code: String!
+  used: Boolean!
+  usedBy: String
+  usedAt: String
+  createdAt: String!
+}
+
 
   extend type Query {
     siteConfig: SiteConfig!
@@ -49,5 +72,7 @@ export const adminSchema = gql`
       serviceFee: Float
     ): SiteConfig!
     verifyAdmin(email: String!, otp: String!, rememberMe: Boolean!): AuthPayload!
+    createQRCodes(count: Int!): [QRCode!]!
+    createClue(input: CreateClueInput!): Clue
   }
 `;

@@ -9,6 +9,7 @@ import { mediaSchema } from './mediaSchema.js';
 import { adminSchema } from './adminSchema.js';
 import { analyticsSchema } from './analyticsSchema.js';
 import { searchSchema } from './searchSchema.js';
+import { campaignSchema } from './campaignSchema.js';
 
 const typeDefs = mergeTypeDefs([
   rootSchema,
@@ -21,6 +22,7 @@ const typeDefs = mergeTypeDefs([
   mediaSchema,
   analyticsSchema,
   searchSchema,
+  campaignSchema,
 ]);
 
 export default typeDefs;

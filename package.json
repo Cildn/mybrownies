@@ -14,6 +14,7 @@
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "apollo-server-express": "^3.13.0",
+    "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "buffer": "^6.0.3",
@@ -33,6 +34,7 @@
     "nodemailer": "^6.10.0",
     "pdfkit": "^0.16.0",
     "pgvector": "^0.2.0",
+    "qrcode": "^1.5.4",
     "sharp": "^0.34.1",
     "stream-browserify": "^3.0.0"
   },
