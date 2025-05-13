@@ -11,12 +11,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://my brownies.com.ng/api/:path*", // Proxy API requests
+        destination: "https://mybrownies.com.ng/api/:path*", // Proxy API requests
       },
 
       {
         source: "/uploads/:path*",
-        destination: "https://my brownies.com.ng/uploads/:path*",
+        destination: "https://mybrownies.com.ng/uploads/:path*",
       },
     ];
   },
