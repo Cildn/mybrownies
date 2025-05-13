@@ -91,8 +91,8 @@ export default function CartSidebar() {
     0
   );
 
-  const discount = couponCode && couponCode.includes('-') ? 5 : 0;
-  const discountedTotal = Math.max(subtotal - discount, 0); // Prevent negative totals
+  const discount = couponCode && couponCode.includes('-') ? subtotal * 0.05 : 0;
+const discountedTotal = Math.max(subtotal - discount, 0);
 
   const hasBrownies = cartItems.some(item => BROWNIE_PRODUCT_IDS.includes(item.product.id));
 
