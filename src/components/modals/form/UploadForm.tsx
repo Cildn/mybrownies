@@ -44,7 +44,7 @@ export default function UploadFormModal({ onClose }: { onClose: () => void }) {
           formData.append("file", file);
           formData.append("folder", fileFolder);
   
-          const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/upload`, formData, {
+          const response = await axios.post("/api/upload", formData, {
             headers: { "Content-Type": "multipart/form-data" },
             onUploadProgress: (progressEvent) => {
               console.log("Upload Progress:", progressEvent.progress);
