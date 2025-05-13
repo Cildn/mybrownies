@@ -4,12 +4,22 @@ import DropzoneComponent from "@/components/form/input/DropZone";
 import Button from "@/components/ui/button/Button";
 import Label from "@/components/form/Label";
 
+type PendingFile = {
+  file: File;
+  newName: string;
+};
+
 export default function UploadFormModal({ onClose }: { onClose: () => void }) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [fileFolder, setFileFolder] = useState("");
 
   // Supported file types
-  const supportedFileTypes = ["image/jpeg", "image/png", "application/pdf", "video/mp4"];
+  const supportedFileTypes = [
+    "image/jpeg",
+    "image/png",
+    "application/pdf",
+    "video/mp4",
+  ];
 
   // Handle file uploads from Dropzone
   const handleFilesUpload = (files: File[]) => {
@@ -17,33 +27,45 @@ export default function UploadFormModal({ onClose }: { onClose: () => void }) {
     if (files.length !== validFiles.length) {
       alert("Some files are not supported. Only JPEG, PNG, PDF, and MP4 files are allowed.");
     }
-    setUploadedFiles(validFiles);
+    // Initialize newName to original file name
+    const newPending = validFiles.map((file) => ({ file, newName: file.name }));
+    setPendingFiles(newPending);
   };
 
   // Handle file removal
   const removeFile = (index: number) => {
-    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle renaming input change
+  const handleRename = (index: number, value: string) => {
+    setPendingFiles((prev) => {
+      const copy = [...prev];
+      copy[index].newName = value;
+      return copy;
+    });
   };
 
   // Handle file upload via REST API
   const handleUpload = async () => {
-    if (uploadedFiles.length === 0) {
+    if (pendingFiles.length === 0) {
       alert("No files uploaded!");
       return;
     }
-  
+
     if (!fileFolder) {
       alert("Please specify a folder for the files.");
       return;
     }
-  
+
     try {
       await Promise.all(
-        uploadedFiles.map(async (file) => {
+        pendingFiles.map(async ({ file, newName }) => {
           const formData = new FormData();
           formData.append("file", file);
           formData.append("folder", fileFolder);
-  
+          formData.append("filename", newName);
+
           const response = await axios.post("/api/upload", formData, {
             headers: { "Content-Type": "multipart/form-data" },
             onUploadProgress: (progressEvent) => {
@@ -53,7 +75,7 @@ export default function UploadFormModal({ onClose }: { onClose: () => void }) {
           console.log("File uploaded:", response.data);
         })
       );
-  
+
       alert("Files uploaded successfully!");
       onClose();
     } catch (error) {
@@ -87,19 +109,28 @@ export default function UploadFormModal({ onClose }: { onClose: () => void }) {
         />
       </div>
 
-      {/* Uploaded Files Preview */}
-      {uploadedFiles.length > 0 && (
+      {/* Uploaded Files Preview with Rename */}
+      {pendingFiles.length > 0 && (
         <div className="mt-4">
           <h4 className="text-sm font-medium text-gray-700">Uploaded Files:</h4>
           <ul className="mt-2 space-y-2">
-            {uploadedFiles.map((file, index) => (
+            {pendingFiles.map(({ file, newName }, index) => (
               <li key={index} className="flex flex-col bg-gray-100 px-3 py-2 rounded-lg">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-gray-700 text-sm">{file.name}</span>
-                  <button onClick={() => removeFile(index)} className="text-red-500 text-sm">
+                  <button
+                    onClick={() => removeFile(index)}
+                    className="text-red-500 text-sm"
+                  >
                     Remove
                   </button>
                 </div>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => handleRename(index, e.target.value)}
+                  className="w-full px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                />
               </li>
             ))}
           </ul>
