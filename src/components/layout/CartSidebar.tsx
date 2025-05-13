@@ -324,7 +324,7 @@ export default function CartSidebar() {
                 <p className="mt-1 text-sm text-gray-500">Size: {item.product.sizes[item.selectedSizeIndex]}</p>
                 <p className="mt-1 text-sm text-gray-500">Qty: {item.quantity}</p>
                 <p className="mt-2 text-sm font-medium">
-                  ${(item.product.prices[item.selectedSizeIndex] * item.quantity).toFixed(2)}
+                  ₦{(item.product.prices[item.selectedSizeIndex] * item.quantity).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -337,7 +337,7 @@ export default function CartSidebar() {
         <div className="border-t border-gray-100 pt-4">
           <div className="flex justify-between text-lg mb-4">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>₦{subtotal.toFixed(2)}</span>
           </div>
           {cartItems.length > 0 && (
             <div className="mb-4">
