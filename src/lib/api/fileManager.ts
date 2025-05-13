@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// Upload a file to a specific folder
 export const uploadFile = async (file: File, folder: string) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -16,42 +17,50 @@ export const uploadFile = async (file: File, folder: string) => {
   }
 };
 
+// Delete a file from a specific folder
 export const deleteFile = async (folder: string, fileName: string) => {
   try {
-    const response = await fetch('/api/files/delete', {
-      method: 'DELETE',
+    const response = await fetch("/api/files/delete", {
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         folder: folder || "",
-        fileName 
+        fileName,
       }),
     });
 
     if (!response.ok) {
-      // Check for 404 and treat it as success (file already deleted)
       if (response.status === 404) {
         return { success: true, message: "File not found (already deleted)" };
       }
 
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete file');
+      throw new Error(errorData.error || "Failed to delete file");
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Delete file error:', error);
+    console.error("Delete file error:", error);
     throw error;
   }
 };
 
+// Get contents of a folder (root or nested)
 export const getFolderContents = async (folderPath: string = "") => {
   try {
-    const response = await axios.get(`/api/folders/${encodeURIComponent(folderPath)}`);
-    return response.data;
+    const url = folderPath
+      ? `/api/folders/${folderPath
+          .split("/")
+          .map(encodeURIComponent)
+          .join("/")}`
+      : "/api/folders";
+
+    const response = await axios.get(url);
+    return response.data; // { folders: FolderItem[], files: FileItem[] }
   } catch (error) {
-    console.error ("Failed to fetch folder contents");
+    console.error("Failed to fetch folder contents:", error);
     throw error;
   }
 };
