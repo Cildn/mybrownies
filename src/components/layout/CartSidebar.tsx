@@ -131,7 +131,7 @@ export default function CartSidebar() {
 
     try {
       const handler = window.PaystackPop.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY as string,
+ key:"pk_live_73f72f02dcd1bee4e2e63b5f8060bacf9e9817a8",
         email,
         amount: discountedTotal * 100,
         currency: 'NGN',
