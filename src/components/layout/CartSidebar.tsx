@@ -91,6 +91,9 @@ export default function CartSidebar() {
     0
   );
 
+  const discount = couponCode && couponCode.includes('-') ? 5 : 0;
+  const discountedTotal = Math.max(subtotal - discount, 0); // Prevent negative totals
+
   const hasBrownies = cartItems.some(item => BROWNIE_PRODUCT_IDS.includes(item.product.id));
 
   const handleRemoveItem = async (itemId: string) => {
@@ -128,9 +131,9 @@ export default function CartSidebar() {
 
     try {
       const handler = window.PaystackPop.setup({
-        key: 'pk_test_8607d9e03822eff8e10c7dc17ba56ab3ef7d79a8',
+        key: 'PAYSTACK_PUBLIC_KEY',
         email,
-        amount: subtotal * 100,
+        amount: discountedTotal * 100,
         currency: 'NGN',
         metadata: {
           custom_fields: [
