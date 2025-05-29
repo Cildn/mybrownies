@@ -42,7 +42,7 @@ export default function MenuSidebar() {
       ))}
 
       <Link 
-        href="/about" 
+        href="/about/history" 
         className="flex items-center justify-between py-3 px-2 text-lg font-light hover:bg-gray-50 rounded-md transition-colors"
       >
         About Us
